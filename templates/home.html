@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Return to Office Helper</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Inline styles for demonstration; move to your CSS file */
+        .calendar {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        .calendar th, .calendar td {
+            width: 14.28%;
+            height: 80px;
+            text-align: center;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        .calendar th {
+            background-color: #f2f2f2;
+        }
+
+        .calendar .not-current-month {
+            color: #aaa;
+            background-color: #f9f9f9;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .navigation a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #007BFF;
+        }
+
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .calendar th, .calendar td {
+                height: 60px;
+                font-size: 12px;
+                padding: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Return to Office Calendar</h1>
+
+    <!-- Navigation Links -->
+    <div class="navigation">
+        <!-- Previous Month -->
+        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous Month</a>
+
+        <!-- Next Month -->
+        <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
+    </div>
+
+    <!-- Calendar Table -->
+    <table class="calendar">
+        <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+        </tr>
+        {{range .Weeks}}
+        <tr>
+            {{range .}}
+            <td class="{{if not .InMonth}}not-current-month{{end}}">
+                {{.Date.Day}}
+            </td>
+            {{end}}
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>
