@@ -1,0 +1,400 @@
+
+
+=== End of readme.md ===
+
+package main
+
+import (
+	"html/template"
+	"io"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/robstave/rto/handlers"
+)
+
+// TemplateRenderer is a custom renderer for Echo
+type TemplateRenderer struct {
+	templates *template.Template
+}
+
+// Render renders a template document
+func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func main() {
+	e := echo.New()
+	log.Println("start")
+
+	// Middleware (optional)
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	funcMap := template.FuncMap{
+		"formatDate": func(t time.Time, layout string) string {
+			return t.Format(layout)
+		},
+	}
+
+	// Parse the templates with custom functions
+	renderer := &TemplateRenderer{
+		templates: template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/*.html")),
+	}
+	e.Renderer = renderer
+
+	log.Println("templates load")
+
+	// Static files
+	e.Static("/static", "static")
+
+	e.POST("/add-event", handlers.AddEvent)
+
+	// Routes
+	e.GET("/", handlers.Home)
+
+	log.Println("Route '/' registered with handlers.Home")
+
+	/*
+		e.GET("/", func(c echo.Context) error {
+			data := struct {
+				CurrentDate time.Time
+			}{
+				CurrentDate: time.Now(),
+			}
+
+			err := c.Render(http.StatusOK, "home.html", data)
+			if err != nil {
+				log.Printf("Template rendering error: %v", err)
+				return c.String(http.StatusInternalServerError, "Internal Server Error")
+			}
+
+			return nil
+		})
+	*/
+
+	log.Println("starting")
+	// Start the server on port 8761
+	if err := e.Start(":8761"); err != nil && err != http.ErrServerClosed {
+		log.Fatal("shutting down the server")
+	}
+}
+
+
+=== End of cmd/main/main.go ===
+
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
+
+// AddEvent handles the addition of new events
+func AddEvent(c echo.Context) error {
+	date := c.FormValue("date") // Expected format: YYYY-MM-DD
+	event := c.FormValue("event")
+
+	if date == "" || event == "" {
+		return c.String(http.StatusBadRequest, "Date and Event are required")
+	}
+
+	// Here, you'd typically save the event to a database
+	// For demonstration, we'll append it to the existing events map
+	// Note: Since getSampleEvents returns a new map each time, you'd need a persistent storage
+
+	// Example (In-Memory - Not Persistent)
+	// This requires modifying getSampleEvents to use a global variable or a proper storage mechanism
+
+	return c.Redirect(http.StatusSeeOther, "/")
+}
+
+
+=== End of handlers/addEvent.go ===
+
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/labstack/echo/v4"
+)
+
+// CalendarDay represents a single day in the calendar
+type CalendarDay struct {
+	Date    time.Time
+	InMonth bool
+	Today   bool
+	Events  []string
+}
+
+// Home renders the calendar on the home page
+func Home(c echo.Context) error {
+	c.Logger().Info("------")
+	c.Logger().Info("------")
+	c.Logger().Info("------")
+
+	// Get current date or date from query parameters
+	currentDate := time.Now()
+	yearParam := c.QueryParam("year")
+	monthParam := c.QueryParam("month")
+	dayParam := c.QueryParam("day")
+
+	if yearParam != "" && monthParam != "" && dayParam != "" {
+		year, err1 := strconv.Atoi(yearParam)
+		month, err2 := strconv.Atoi(monthParam)
+		day, err3 := strconv.Atoi(dayParam)
+		if err1 == nil && err2 == nil && err3 == nil {
+			currentDate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, currentDate.Location())
+		}
+	}
+
+	// Generate calendar for the current month
+	weeks := getCalendarMonth(currentDate)
+
+	// Precompute formatted dates for navigation links
+	prevMonthDate := currentDate.AddDate(0, -1, 0)
+	nextMonthDate := currentDate.AddDate(0, 1, 0)
+
+	// Sample Events (In-Memory)
+	// In a real application, you'd fetch these from a database
+	events := getSampleEvents()
+
+	// Assign events to the corresponding days
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
+			if dayEvents, exists := events[dateStr]; exists {
+				weeks[weekIdx][dayIdx].Events = dayEvents
+			}
+		}
+	}
+
+	// Today's Date for Highlighting
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	// Assign Today Flag
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			if day.Date.Equal(today) {
+				weeks[weekIdx][dayIdx].Today = true
+			}
+		}
+	}
+
+	data := map[string]interface{}{
+		"CurrentDate": currentDate,
+		"Weeks":       weeks,
+		"PrevMonth": map[string]string{
+			"year":  prevMonthDate.Format("2006"),
+			"month": prevMonthDate.Format("01"),
+			"day":   prevMonthDate.Format("02"),
+		},
+		"NextMonth": map[string]string{
+			"year":  nextMonthDate.Format("2006"),
+			"month": nextMonthDate.Format("01"),
+			"day":   nextMonthDate.Format("02"),
+		},
+	}
+
+	// Render the template
+	if err := c.Render(http.StatusOK, "home.html", data); err != nil {
+		c.Logger().Error("Template rendering error:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return nil
+}
+
+// getCalendarMonth generates all weeks for the given month, including days from adjacent months
+func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
+	var weeks [][]CalendarDay
+
+	// Normalize to the first day of the month
+	firstOfMonth := time.Date(currentDate.Year(), currentDate.Month(), 1, 0, 0, 0, 0, currentDate.Location())
+
+	// Find the first Sunday before or on the first day of the month
+	weekday := firstOfMonth.Weekday()
+	daysToSubtract := int(weekday) // Sunday = 0
+	startDate := firstOfMonth.AddDate(0, 0, -daysToSubtract)
+
+	// Iterate over the weeks
+	for week := 0; week < 6; week++ { // Up to 6 weeks in a month view
+		var weekDays []CalendarDay
+		for day := 0; day < 7; day++ {
+			currentDay := startDate.AddDate(0, 0, week*7+day)
+			inMonth := currentDay.Month() == firstOfMonth.Month()
+			weekDays = append(weekDays, CalendarDay{
+				Date:    currentDay,
+				InMonth: inMonth,
+			})
+		}
+		weeks = append(weeks, weekDays)
+
+		// Stop if we've passed the end of the month and the week contains only days from the next month
+		if weekDays[0].Date.Month() > firstOfMonth.Month() || (weekDays[0].Date.Month() == firstOfMonth.Month() && weekDays[0].Date.Day() == 1 && week > 0) {
+			break
+		}
+	}
+
+	return weeks
+}
+
+
+=== End of handlers/home.go ===
+
+package handlers
+
+func getSampleEvents() map[string][]string {
+	return map[string][]string{
+		"2024-10-10": {"Team Meeting at 10 AM", "Lunch with Sarah"},
+		"2024-09-15": {"Project Deadline"},
+		"2024-04-20": {"Company Retreat"},
+		"2024-05-05": {"Doctor Appointment at 3 PM"},
+		// Add more events as needed
+	}
+}
+
+
+=== End of handlers/samplesData.go ===
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Return to Office Helper</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Calendar Styles */
+        .calendar {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        .calendar th, .calendar td {
+            width: 14.28%;
+            height: 100px;
+            text-align: left;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .calendar th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .calendar td.not-current-month {
+            color: #aaa;
+            background-color: #f9f9f9;
+        }
+
+        .calendar td.today {
+            background-color: #ffeb3b; /* Bright yellow */
+            font-weight: bold;
+            border: 2px solid #fbc02d; /* Darker yellow border */
+        }
+
+        .events {
+            margin-top: 5px;
+            padding-left: 10px;
+            list-style-type: disc;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .navigation a {
+            margin: 0 15px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .calendar th, .calendar td {
+                height: 80px;
+                padding: 5px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar th, .calendar td {
+                height: 60px;
+                padding: 2px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Return to Office Calendar</h1>
+
+    <!-- Navigation Links with Current Month and Year -->
+    <div class="navigation">
+        <span style="font-size: 1.2em; font-weight: bold;">{{.CurrentDate.Format "January 2006"}}</span>
+        <br>
+        <!-- Previous Month -->
+        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous Month</a>
+
+        <!-- Next Month -->
+        <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
+    </div>
+
+    <!-- Calendar Table -->
+    <table class="calendar">
+        <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+        </tr>
+        {{range .Weeks}}
+        <tr>
+            {{range .}}
+            <td class="{{if not .InMonth}}not-current-month{{end}} {{if .Today}}today{{end}}">
+                <div>{{.Date.Day}}</div>
+                {{if .Events}}
+                    <ul class="events">
+                        {{range .Events}}
+                            <li>{{.}}</li>
+                        {{end}}
+                    </ul>
+                {{end}}
+            </td>
+            {{end}}
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>
+
+
+=== End of templates/home.html ===
+

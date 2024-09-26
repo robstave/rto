@@ -12,6 +12,8 @@ import (
 type CalendarDay struct {
 	Date    time.Time
 	InMonth bool
+	Today   bool
+	Events  []string
 }
 
 // Home renders the calendar on the home page
@@ -41,6 +43,33 @@ func Home(c echo.Context) error {
 	// Precompute formatted dates for navigation links
 	prevMonthDate := currentDate.AddDate(0, -1, 0)
 	nextMonthDate := currentDate.AddDate(0, 1, 0)
+
+	// Sample Events (In-Memory)
+	// In a real application, you'd fetch these from a database
+	events := getSampleEvents()
+
+	// Assign events to the corresponding days
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
+			if dayEvents, exists := events[dateStr]; exists {
+				weeks[weekIdx][dayIdx].Events = dayEvents
+			}
+		}
+	}
+
+	// Today's Date for Highlighting
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	// Assign Today Flag
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			if day.Date.Equal(today) {
+				weeks[weekIdx][dayIdx].Today = true
+			}
+		}
+	}
 
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,

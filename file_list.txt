@@ -1,0 +1,6 @@
+readme.md
+cmd/main/main.go
+handlers/addEvent.go
+handlers/home.go
+handlers/samplesData.go
+templates/home.html
