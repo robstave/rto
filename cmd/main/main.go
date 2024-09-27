@@ -42,35 +42,23 @@ func main() {
 	}
 	e.Renderer = renderer
 
-	log.Println("templates load")
+	log.Println("templates loaded")
 
 	// Static files
 	e.Static("/static", "static")
 
-	e.POST("/add-event", handlers.AddEvent)
+	e.GET("/add-event", handlers.ShowAddEventForm) // New route to show add event form
+	e.POST("/add-event", handlers.AddEvent)        // Existing POST route to handle form submission
+
+	e.GET("/events", handlers.EventsList)
 
 	// Routes
 	e.GET("/", handlers.Home)
-
 	log.Println("Route '/' registered with handlers.Home")
 
-	/*
-		e.GET("/", func(c echo.Context) error {
-			data := struct {
-				CurrentDate time.Time
-			}{
-				CurrentDate: time.Now(),
-			}
-
-			err := c.Render(http.StatusOK, "home.html", data)
-			if err != nil {
-				log.Printf("Template rendering error: %v", err)
-				return c.String(http.StatusInternalServerError, "Internal Server Error")
-			}
-
-			return nil
-		})
-	*/
+	// Initialize events
+	log.Println("init events")
+	handlers.InitializeEvents()
 
 	log.Println("starting")
 	// Start the server on port 8761

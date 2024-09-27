@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Events List - RTO Attendance Tracker</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <h1 style="text-align: center;">List of Events</h1>
+
+    <!-- Navigation Links -->
+    <div class="navigation" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
+    </div>
+
+    <!-- Events List -->
+    <div class="events-list" style="max-width: 800px; margin: 0 auto;">
+        {{if .Events}}
+            <ul style="list-style-type: none; padding: 0;">
+                {{range .Events}}
+                    <li style="padding: 10px; border-bottom: 1px solid #ddd;">
+                        <strong>{{.Date.Format "January 2, 2006"}}</strong> - 
+                        <span>{{if eq .Type "holiday"}}Holiday: {{.Description}}{{else if eq .Type "vacation"}}Vacation: {{.Description}}{{else if eq .Type "attendance"}}{{if .IsInOffice}}In Office{{else}}Remote{{end}}{{end}}</span>
+                    </li>
+                {{end}}
+            </ul>
+        {{else}}
+            <p style="text-align: center;">No events to display.</p>
+        {{end}}
+    </div>
+</body>
+</html>

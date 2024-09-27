@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Event - RTO Attendance Tracker</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <h1 style="text-align: center;">Add New Event</h1>
+
+    <!-- Navigation Links -->
+    <div class="navigation" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
+    </div>
+
+    <!-- Add Event Form -->
+    <div class="add-event-form" style="max-width: 600px; margin: 0 auto;">
+        <form action="/add-event" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label for="date">Date:</label><br>
+                <input type="date" id="date" name="date" required style="width: 100%; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="type">Event Type:</label><br>
+                <select id="type" name="type" required style="width: 100%; padding: 8px;">
+                    <option value="">--Select Type--</option>
+                    <option value="holiday">Holiday</option>
+                    <option value="vacation">Vacation</option>
+                    <option value="attendance">Attendance</option>
+                </select>
+            </div>
+            <div id="attendance-options" style="display: none; margin-bottom: 15px;">
+                <label for="attendance">Attendance Type:</label><br>
+                <select id="attendance" name="isInOffice" style="width: 100%; padding: 8px;">
+                    <option value="true">In Office</option>
+                    <option value="false">Remote</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="description">Description:</label><br>
+                <input type="text" id="description" name="description" style="width: 100%; padding: 8px;">
+            </div>
+            <button type="submit" style="padding: 10px 20px;">Add Event</button>
+        </form>
+    </div>
+
+    <script>
+        // Show/hide attendance options based on event type
+        document.getElementById('type').addEventListener('change', function() {
+            var attendanceOptions = document.getElementById('attendance-options');
+            if (this.value === 'attendance') {
+                attendanceOptions.style.display = 'block';
+            } else {
+                attendanceOptions.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

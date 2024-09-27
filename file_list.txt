@@ -1,6 +1,9 @@
 readme.md
 cmd/main/main.go
-handlers/addEvent.go
+handlers/handlers.go
 handlers/home.go
-handlers/samplesData.go
+handlers/events.go
+handlers/holidays.go
+static/css/styles.css
 templates/home.html
+templates/events.html

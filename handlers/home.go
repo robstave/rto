@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,8 +14,11 @@ type CalendarDay struct {
 	Date    time.Time
 	InMonth bool
 	Today   bool
-	Events  []string
+	Events  []Event
 }
+
+// Assume events are now a global variable or part of a struct for persistence
+var allEvents []Event
 
 // Home renders the calendar on the home page
 func Home(c echo.Context) error {
@@ -44,21 +48,34 @@ func Home(c echo.Context) error {
 	prevMonthDate := currentDate.AddDate(0, -1, 0)
 	nextMonthDate := currentDate.AddDate(0, 1, 0)
 
-	// Sample Events (In-Memory)
-	// In a real application, you'd fetch these from a database
-	events := getSampleEvents()
-
 	// Assign events to the corresponding days
 	for weekIdx, week := range weeks {
 		for dayIdx, day := range week {
 			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
-			if dayEvents, exists := events[dateStr]; exists {
-				weeks[weekIdx][dayIdx].Events = dayEvents
+			dayEvents := []Event{}
+
+			for _, event := range allEvents {
+				if event.Date.Format("2006-01-02") == dateStr {
+					dayEvents = append(dayEvents, event)
+				}
 			}
+
+			//// Convert to event descriptions for the template
+			//var eventDescriptions []string
+			//for _, e := range dayEvents {
+			//	eventDescriptions = append(eventDescriptions, e.Description)
+			//}
+
+			weeks[weekIdx][dayIdx].Events = dayEvents
+
+			// Mark today if applicable
+			//if day.Date.Equal(today) {
+			//	weeks[weekIdx][dayIdx].Today = true
+			//}
 		}
 	}
 
-	// Today's Date for Highlighting
+	// Define 'today' before the loop
 	today := time.Now()
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
 
@@ -84,6 +101,18 @@ func Home(c echo.Context) error {
 			"month": nextMonthDate.Format("01"),
 			"day":   nextMonthDate.Format("02"),
 		},
+	}
+
+	//log
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			// Existing event assignment logic
+
+			// Debugging: Log events for each day
+			if len(weeks[weekIdx][dayIdx].Events) > 0 {
+				log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+			}
+		}
 	}
 
 	// Render the template
@@ -120,8 +149,17 @@ func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
 		}
 		weeks = append(weeks, weekDays)
 
-		// Stop if we've passed the end of the month and the week contains only days from the next month
-		if weekDays[0].Date.Month() > firstOfMonth.Month() || (weekDays[0].Date.Month() == firstOfMonth.Month() && weekDays[0].Date.Day() == 1 && week > 0) {
+		// Check if all days in the current week are from the next month
+		allDaysNextMonth := true
+		for _, day := range weekDays {
+			if day.Date.Month() == firstOfMonth.Month() {
+				allDaysNextMonth = false
+				break
+			}
+		}
+
+		if allDaysNextMonth {
+			weeks = weeks[:len(weeks)-1] // Remove the last week added
 			break
 		}
 	}

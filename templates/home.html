@@ -4,84 +4,6 @@
     <meta charset="UTF-8">
     <title>Return to Office Helper</title>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        /* Calendar Styles */
-        .calendar {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            border-collapse: collapse;
-        }
-
-        .calendar th, .calendar td {
-            width: 14.28%;
-            height: 100px;
-            text-align: left;
-            vertical-align: top;
-            border: 1px solid #ddd;
-            padding: 5px 10px;
-            box-sizing: border-box;
-            position: relative;
-        }
-
-        .calendar th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .calendar td.not-current-month {
-            color: #aaa;
-            background-color: #f9f9f9;
-        }
-
-        .calendar td.today {
-            background-color: #ffeb3b; /* Bright yellow */
-            font-weight: bold;
-            border: 2px solid #fbc02d; /* Darker yellow border */
-        }
-
-        .events {
-            margin-top: 5px;
-            padding-left: 10px;
-            list-style-type: disc;
-            font-size: 0.9em;
-            color: #333;
-        }
-
-        .navigation {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .navigation a {
-            margin: 0 15px;
-            text-decoration: none;
-            color: #007BFF;
-            font-weight: bold;
-        }
-
-        .navigation a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .calendar th, .calendar td {
-                height: 80px;
-                padding: 5px;
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .calendar th, .calendar td {
-                height: 60px;
-                padding: 2px;
-                font-size: 12px;
-            }
-        }
-    </style>
 </head>
 <body>
     <h1 style="text-align: center;">Return to Office Calendar</h1>
@@ -95,6 +17,28 @@
 
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons" style="text-align: center; margin: 20px 0;">
+        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add Event</button>
+        <button onclick="window.location.href='/events'" style="padding: 10px 20px;">Events</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-color holiday"></span> Holiday
+        </div>
+        <div class="legend-item">
+            <span class="legend-color vacation"></span> Vacation
+        </div>
+        <div class="legend-item">
+            <span class="legend-color in-office"></span> In Office
+        </div>
+        <div class="legend-item">
+            <span class="legend-color remote"></span> Remote
+        </div>
     </div>
 
     <!-- Calendar Table -->
@@ -111,14 +55,26 @@
         {{range .Weeks}}
         <tr>
             {{range .}}
-            <td class="{{if not .InMonth}}not-current-month{{end}} {{if .Today}}today{{end}}">
+            <td class="
+                {{if not .InMonth}}not-current-month{{end}} 
+                {{if .Today}}today{{end}}">
                 <div>{{.Date.Day}}</div>
                 {{if .Events}}
-                    <ul class="events">
+                    <div class="events">
                         {{range .Events}}
-                            <li>{{.}}</li>
+                            {{if eq .Type "holiday"}}
+                                <span class="event-holiday">{{.Description}}</span>
+                            {{else if eq .Type "vacation"}}
+                                <span class="event-vacation">{{.Description}}</span>
+                            {{else if eq .Type "attendance"}}
+                                {{if .IsInOffice}}
+                                    <span class="event-in-office">In Office</span>
+                                {{else}}
+                                    <span class="event-remote">Remote</span>
+                                {{end}}
+                            {{end}}
                         {{end}}
-                    </ul>
+                    </div>
                 {{end}}
             </td>
             {{end}}

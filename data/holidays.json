@@ -1,0 +1,18 @@
+[
+    {
+      "date": "2024-11-23",
+      "name": "Thanksgiving Day",
+      "type": "holiday"
+    },
+    {
+      "date": "2024-12-25",
+      "name": "Christmas Day",
+      "type": "holiday"
+    },
+    {
+      "date": "2024-12-31",
+      "name": "New Year's Eve",
+      "type": "vacation"
+    }
+  ]
+  

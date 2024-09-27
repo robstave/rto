@@ -1,0 +1,50 @@
+[
+    {
+        "date": "2024-11-23T00:00:00Z",
+        "description": "Thanksgiving Day",
+        "isInOffice": false,
+        "type": "holiday"
+    },
+    {
+        "date": "2024-12-25T00:00:00Z",
+        "description": "Christmas Day",
+        "isInOffice": false,
+        "type": "holiday"
+    },
+    {
+        "date": "2024-12-31T00:00:00Z",
+        "description": "New Year's Eve",
+        "isInOffice": false,
+        "type": "vacation"
+    },
+    {
+        "date": "2024-10-02T00:00:00Z",
+        "description": "In Office",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-06T00:00:00Z",
+        "description": "Remote",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-15T00:00:00Z",
+        "description": "Remote",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-16T00:00:00Z",
+        "description": "In Office",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-01T00:00:00Z",
+        "description": "sss",
+        "isInOffice": false,
+        "type": "holiday"
+    }
+]

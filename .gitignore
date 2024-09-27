@@ -1,0 +1,3 @@
+# Ignore combined.txt in the root directory
+/combined.txt
+/rto

@@ -1,84 +1,154 @@
-/* styles.css */
-
-
- 
-
-/* static/css/styles.css */
-
-/* Calendar Styles */
-.calendar {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    border-collapse: collapse;
-}
-
-.calendar th, .calendar td {
-    width: 14.28%;
-    height: 100px;
-    text-align: left;
-    vertical-align: top;
-    border: 1px solid #ddd;
-    padding: 5px 10px;
-    box-sizing: border-box;
-    position: relative;
-}
-
-.calendar th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    text-align: center;
-}
-
-.calendar td.not-current-month {
-    color: #aaa;
-    background-color: #f9f9f9;
-}
-
-.calendar td.today {
-    background-color: #ffeb3b; /* Bright yellow */
-    font-weight: bold;
-    border: 2px solid #fbc02d; /* Darker yellow border */
-}
-
-.events {
-    margin-top: 5px;
-    padding-left: 10px;
-    list-style-type: disc;
-    font-size: 0.9em;
-    color: #333;
-}
-
-.navigation {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.navigation a {
-    margin: 0 15px;
-    text-decoration: none;
-    color: #007BFF;
-    font-weight: bold;
-}
-
-.navigation a:hover {
-    text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .calendar th, .calendar td {
-        height: 80px;
-        padding: 5px;
-        font-size: 14px;
+    /* Calendar Styles */
+    .calendar {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        border-collapse: collapse;
     }
-}
 
-@media (max-width: 480px) {
     .calendar th, .calendar td {
-        height: 60px;
-        padding: 2px;
-        font-size: 12px;
+        width: 14.28%;
+        height: 100px;
+        text-align: left;
+        vertical-align: top;
+        border: 1px solid #ddd;
+        padding: 5px 10px;
+        box-sizing: border-box;
+        position: relative;
     }
-}
- 
+
+    .calendar th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .calendar td.not-current-month {
+        color: #130707;
+        background-color: #f9f9f9;
+    }
+
+    .calendar td.today {
+        border: 2px solid #fbc02d; /* Darker yellow border */
+    }
+
+    /* Event Type Classes */
+    .event-holiday {
+        background-color: #2196F3; /* Blue */
+        color: white;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: inline-block;
+    }
+
+    .event-vacation {
+        background-color: #9C27B0; /* Purple */
+        color: white;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: inline-block;
+    }
+
+    .event-in-office {
+        background-color: #4CAF50; /* Green */
+        color: white;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: inline-block;
+    }
+
+    .event-remote {
+        background-color: #F44336; /* Red */
+        color: white;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: inline-block;
+    }
+
+    .events {
+        margin-top: 5px;
+        padding-left: 0;
+        list-style-type: none;
+        font-size: 0.9em;
+        color: #333;
+    }
+
+    .navigation {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .navigation a {
+        margin: 0 15px;
+        text-decoration: none;
+        color: #007BFF;
+        font-weight: bold;
+    }
+
+    .navigation a:hover {
+        text-decoration: underline;
+    }
+
+    /* Legend Styles */
+    .legend {
+        max-width: 800px;
+        margin: 20px auto;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        font-size: 0.9em;
+    }
+
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        display: inline-block;
+        margin-right: 5px;
+        border-radius: 3px;
+    }
+
+    .legend-color.holiday {
+        background-color: #2196F3; /* Blue */
+    }
+
+    .legend-color.vacation {
+        background-color: #9C27B0; /* Purple */
+    }
+
+    .legend-color.in-office {
+        background-color: #4CAF50; /* Green */
+    }
+
+    .legend-color.remote {
+        background-color: #F44336; /* Red */
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .calendar th, .calendar td {
+            height: 80px;
+            padding: 5px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .calendar th, .calendar td {
+            height: 60px;
+            padding: 2px;
+            font-size: 12px;
+        }
+    }
