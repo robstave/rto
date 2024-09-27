@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -51,6 +52,7 @@ func main() {
 	e.POST("/add-event", handlers.AddEvent)        // Existing POST route to handle form submission
 
 	e.GET("/events", handlers.EventsList)
+	e.GET("/prefs", handlers.ShowPrefs)
 
 	// Routes
 	e.GET("/", handlers.Home)
@@ -58,7 +60,12 @@ func main() {
 
 	// Initialize events
 	log.Println("init events")
-	handlers.InitializeEvents()
+	holidaysPath := filepath.Join("data", "holidays.json")
+	eventsPath := filepath.Join("data", "events.json")
+	handlers.InitializeEvents(holidaysPath, eventsPath)
+	// Initialize preferences
+	preferencesPath := filepath.Join("data", "preferences.json")
+	handlers.InitializePreferences(preferencesPath)
 
 	log.Println("starting")
 	// Start the server on port 8761

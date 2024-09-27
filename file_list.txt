@@ -4,6 +4,9 @@ handlers/handlers.go
 handlers/home.go
 handlers/events.go
 handlers/holidays.go
+handlers/preferences.go
 static/css/styles.css
 templates/home.html
 templates/events.html
+templates/prefs.html
+templates/add_event.html

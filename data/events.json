@@ -1,22 +1,5 @@
 [
-    {
-        "date": "2024-11-23",
-        "description": "Thanksgiving Day",
-        "isInOffice": false,
-        "type": "holiday"
-    },
-    {
-        "date": "2024-12-25",
-        "description": "Christmas Day",
-        "isInOffice": false,
-        "type": "holiday"
-    },
-    {
-        "date": "2024-12-31",
-        "description": "New Year's Eve",
-        "isInOffice": false,
-        "type": "vacation"
-    },
+    
     {
         "date": "2024-10-02",
         "description": "In Office",

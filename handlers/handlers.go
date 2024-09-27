@@ -66,6 +66,10 @@ func AddEvent(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
+func ShowPrefs(c echo.Context) error {
+	return c.Render(http.StatusOK, "prefs.html", nil)
+}
+
 // ShowAddEventForm renders the Add Event form
 func ShowAddEventForm(c echo.Context) error {
 	return c.Render(http.StatusOK, "add_event.html", nil)

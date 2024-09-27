@@ -19,8 +19,8 @@ type Event struct {
 }
 
 // InitializeEvents loads holidays and attendance events
-func InitializeEvents() {
-	holidays, err := LoadHolidays("data/holidays.json")
+func InitializeEvents(holidaysPath string, eventsPath string) {
+	holidays, err := LoadHolidays(holidaysPath)
 	if err != nil {
 		log.Printf("Error loading holidays: %v", err)
 		allEvents = []Event{}
@@ -28,7 +28,7 @@ func InitializeEvents() {
 	}
 
 	// Load attendance events from events.json if implementing Feature 5
-	attendanceEvents, err := LoadAttendanceEvents("data/events.json")
+	attendanceEvents, err := LoadAttendanceEvents(eventsPath)
 	if err != nil {
 		log.Printf("Error loading attendance events: %v", err)
 		attendanceEvents = []Event{}
