@@ -67,6 +67,10 @@ func main() {
 	preferencesPath := filepath.Join("data", "preferences.json")
 	handlers.InitializePreferences(preferencesPath)
 
+	// Register the new route for adding default days
+	e.POST("/prefs/add-default-days", handlers.AddDefaultDays)
+	log.Println("Route '/prefs/add-default-days' registered with handlers.AddDefaultDays")
+
 	log.Println("starting")
 	// Start the server on port 8761
 	if err := e.Start(":8761"); err != nil && err != http.ErrServerClosed {

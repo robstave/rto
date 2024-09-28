@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"sync"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,7 +20,13 @@ type CalendarDay struct {
 }
 
 // Assume events are now a global variable or part of a struct for persistence
-var allEvents []Event
+//var allEvents []Event
+
+// Global variable to store all events and manage thread safety
+var (
+	allEvents  []Event
+	eventsLock sync.RWMutex
+)
 
 // Home renders the calendar on the home page
 func Home(c echo.Context) error {

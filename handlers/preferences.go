@@ -11,10 +11,10 @@ import (
 
 // Preferences represents user preferences
 type Preferences struct {
-	DefaultDays string `json:"defaultDays"`
+	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
 }
 
-// Global variable to store preferences
+// Global variables to store preferences and manage thread safety
 var (
 	preferences     Preferences
 	preferencesLock sync.RWMutex
@@ -28,7 +28,7 @@ func InitializePreferences(filePath string) {
 		// Set default preferences if loading fails
 		preferencesLock.Lock()
 		preferences = Preferences{
-			DefaultDays: "T,W,Th,F",
+			DefaultDays: "T,W,Th,F", // Default to Tuesday, Wednesday, Thursday, Friday
 		}
 		preferencesLock.Unlock()
 	} else {
@@ -62,7 +62,7 @@ func LoadPreferences(filePath string) error {
 	return nil
 }
 
-// isDefaultInOffice checks if the given day is a default in-office day
+// isDefaultInOffice checks if the given day abbreviation is a default in-office day
 func isDefaultInOffice(day string) bool {
 	preferencesLock.RLock()
 	defer preferencesLock.RUnlock()

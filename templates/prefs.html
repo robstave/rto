@@ -2,18 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Events List - RTO Attendance Tracker</title>
+    <title>Preferences - RTO Attendance Tracker</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1 style="text-align: center;">Prefs</h1>
+    <h1 style="text-align: center;">Preferences</h1>
 
     <!-- Navigation Links -->
     <div class="navigation" style="text-align: center; margin-bottom: 20px;">
         <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
     </div>
 
-    <!-- Prefs List -->
-    
+    <!-- Display Default In-Office Days -->
+    <div class="preferences" style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <h2>Default In-Office Days</h2>
+        <p>{{.Preferences.DefaultDays}}</p>
+    </div>
+
+    <!-- Add Default Days Button -->
+    <div style="text-align: center; margin-top: 20px;">
+        <form action="/prefs/add-default-days" method="POST">
+            <button type="submit" style="padding: 10px 20px;">Add Default Days</button>
+        </form>
+    </div>
+
+    <!-- Optional: Success Message -->
+    {{if .SuccessMessage}}
+    <div style="max-width: 800px; margin: 20px auto; text-align: center; color: green;">
+        <p>{{.SuccessMessage}}</p>
+    </div>
+    {{end}}
+
+    <!-- Optional: Error Message -->
+    {{if .ErrorMessage}}
+    <div style="max-width: 800px; margin: 20px auto; text-align: center; color: red;">
+        <p>{{.ErrorMessage}}</p>
+    </div>
+    {{end}}
+
 </body>
 </html>

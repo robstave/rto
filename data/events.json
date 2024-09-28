@@ -23,11 +23,5 @@
         "description": "In Office",
         "isInOffice": true,
         "type": "attendance"
-    },
-    {
-        "date": "2024-10-01T00:00:00Z",
-        "description": "sss",
-        "isInOffice": false,
-        "type": "holiday"
-    }
+    } 
 ]
