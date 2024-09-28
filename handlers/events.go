@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,7 +19,7 @@ type Event struct {
 	Type        string `json:"type"` // "attendance", "holiday", "vacation"
 }
 
-// InitializeEvents loads holidays and attendance events
+// InitializeEvents loads holidays and attendance events without duplicates
 func InitializeEvents(holidaysPath string, eventsPath string) {
 	holidays, err := LoadHolidays(holidaysPath)
 	if err != nil {
@@ -27,17 +28,39 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 		return
 	}
 
-	// Load attendance events from events.json if implementing Feature 5
+	// Initialize a map to track unique events
+	eventMap := make(map[string]Event)
+
+	// Add holidays to the map
+	for _, h := range holidays {
+		key := h.Date.Format("2006-01-02") + "_" + h.Type
+		eventMap[key] = h
+	}
+
+	// Load attendance events from events.json
 	attendanceEvents, err := LoadAttendanceEvents(eventsPath)
 	if err != nil {
 		log.Printf("Error loading attendance events: %v", err)
 		attendanceEvents = []Event{}
 	}
 
-	allEvents = append(holidays, attendanceEvents...)
+	// Add attendance events to the map, avoiding duplicates
+	for _, a := range attendanceEvents {
+		key := a.Date.Format("2006-01-02") + "_" + a.Type
+		if _, exists := eventMap[key]; !exists {
+			eventMap[key] = a
+		} else {
+			log.Printf("Duplicate event found on %s with type %s. Skipping.", a.Date.Format("2006-01-02"), a.Type)
+		}
+	}
 
-	log.Printf("Events Loaded:len= %v", len(allEvents))
+	// Convert the map back to a slice
+	allEvents = []Event{}
+	for _, e := range eventMap {
+		allEvents = append(allEvents, e)
+	}
 
+	log.Printf("Events Loaded: len= %v", len(allEvents))
 }
 
 // LoadAttendanceEvents loads attendance events from a JSON file
@@ -65,15 +88,15 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 	if err := json.Unmarshal(byteValue, &rawEvents2); err != nil {
 		return nil, err
 	}
-	log.Println("a")
 	// Ensure date parsing
 	var events []Event
 	for i, e := range rawEvents2 {
 		log.Println("1")
 		//parsedDate, err := time.Parse("2006-01-02", e.Date.Format("2006-01-02"))
-		parsedDate, err := time.Parse("2006-01-02", e.Date)
+		//parsedDate, err := time.Parse("2006-01-02", e.Date)
+		parsedDate, err := parseDate(e.Date)
 		if err != nil {
-			log.Printf("Invalid date format in events.json %v for event %v: %v", i, e.Description, err)
+			log.Printf("Invalid ddddate format in events.json %v for event %v: %v", i, e.Description, err)
 			continue
 		}
 
@@ -116,13 +139,13 @@ func LoadHolidays(filePath string) ([]Event, error) {
 
 	events := []Event{}
 	for _, re := range rawEvents {
-		date, err := time.Parse("2006-01-02", re.Date)
+		parsedDate, err := parseDate(re.Date)
 		if err != nil {
 			log.Printf("Invalid date format in holidays.json: %v", err)
 			continue
 		}
 		events = append(events, Event{
-			Date:        date,
+			Date:        parsedDate,
 			Description: re.Name,
 			IsInOffice:  false, // Holidays and vacations override attendance
 			Type:        re.Type,
@@ -130,4 +153,22 @@ func LoadHolidays(filePath string) ([]Event, error) {
 	}
 
 	return events, nil
+}
+
+// parseDate tries to parse a date string using multiple layouts.
+// It returns the parsed time.Time or an error if none of the layouts match.
+func parseDate(dateStr string) (time.Time, error) {
+	layouts := []string{
+		"2006-01-02",          // "YYYY-MM-DD"
+		time.RFC3339,          // "YYYY-MM-DDTHH:MM:SSZ"
+		"2006-01-02T15:04:05", // "YYYY-MM-DDTHH:MM:SS"
+	}
+
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, dateStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, errors.New("invalid date format")
 }

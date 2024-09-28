@@ -3,7 +3,7 @@ cmd/main/main.go
 handlers/handlers.go
 handlers/home.go
 handlers/events.go
-handlers/holidays.go
+handlers/utils.go
 handlers/preferences.go
 static/css/styles.css
 templates/home.html

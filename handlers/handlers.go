@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
+	"io/ioutil"
+
 	"log"
 	"net/http"
 	"strings"
@@ -125,19 +128,12 @@ func ToggleAttendance(c echo.Context) error {
 		})
 	}
 
-	// Optionally, save the updated events to events.json for persistence
-	// Uncomment the following lines if you wish to persist changes
-
-	/*
-		err = SaveEvents("data/events.json")
-		if err != nil {
-			log.Printf("Error saving events: %v", err)
-			return c.JSON(http.StatusInternalServerError, ToggleAttendanceResponse{
-				Success: false,
-				Message: "Failed to save updated events.",
-			})
-		}
-	*/
+	// Save to events.json
+	eventsFilePath := "data/events.json" // Ensure this path is correct
+	if err := SaveEvents(eventsFilePath); err != nil {
+		log.Printf("Error saving events: %v", err)
+		return c.String(http.StatusInternalServerError, "Failed to save event.")
+	}
 
 	// Determine the new status
 	newStatus := "remote"
@@ -237,6 +233,11 @@ func AddDefaultDays(c echo.Context) error {
 
 		dayAbbrevLower := strings.ToLower(dayAbbrev)
 
+		// **New Condition:** Skip Saturdays and Sundays
+		if d.Weekday() == time.Saturday || d.Weekday() == time.Sunday {
+			continue // Skip to the next day without creating an event
+		}
+
 		// Determine if it's a default in-office day
 		isInOffice, isDefault := defaultDaysMap[dayAbbrevLower]
 		if !isDefault {
@@ -270,6 +271,13 @@ func AddDefaultDays(c echo.Context) error {
 
 	// Optionally, you can save `allEvents` to `events.json` here if persistence is desired
 
+	// Save the updated events to events.json
+	eventsFilePath := "data/events.json" // Ensure this path is correct
+	if err := SaveEvents(eventsFilePath); err != nil {
+		log.Printf("Error saving events: %v", err)
+		return c.String(http.StatusInternalServerError, "Failed to save default attendance events.")
+	}
+
 	// Redirect back to preferences with a success message
 	// To display messages, you can use query parameters or session-based flash messages
 	// For simplicity, we'll redirect without messages
@@ -281,4 +289,25 @@ func sameDay(a, b time.Time) bool {
 	yearA, monthA, dayA := a.Date()
 	yearB, monthB, dayB := b.Date()
 	return yearA == yearB && monthA == monthB && dayA == dayB
+}
+
+// SaveEvents saves the current list of events to the specified JSON file.
+func SaveEvents(filePath string) error {
+	log.Println("saving")
+	//eventsLock.RLock()
+	//defer eventsLock.RUnlock()
+
+	data, err := json.MarshalIndent(allEvents, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	log.Println("done saving")
+
+	return nil
 }

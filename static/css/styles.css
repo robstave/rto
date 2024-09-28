@@ -210,10 +210,56 @@
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
 }
 
+
+
+/* Style for weekends */
+.weekend {
+    background-color: #f0f0f0; /* Light gray background for weekends */
+    color: #a0a0a0;            /* Gray text for weekends */
+}
+
+/* Alternatively, for a darker appearance, use a darker background */
+.weekend {
+    background-color: #d3d3d3; /* Darker gray background */
+    color: #505050;            /* Darker gray text */
+}
+
+/* Ensure hover effects or other interactions don't override weekend styling */
+.weekend:hover {
+    background-color: #c0c0c0; /* Slightly darker on hover */
+}
+
+.weekend {
+    border: 2px solid #a0a0a0;
+}
+
+/* Optional: Make the weekend cells non-interactive if desired */
+.weekend .toggle-attendance {
+    pointer-events: none; /* Disable clicking on attendance toggles for weekends */
+    opacity: 0.6;         /* Slightly faded to indicate non-interactive */
+}
+
+
+
 /* Enhance the legend container for better spacing on smaller screens */
 @media (max-width: 600px) {
     .legend {
         flex-direction: column;
         gap: 10px;
     }
+}
+
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+p {
+    margin-bottom: 1em;
 }

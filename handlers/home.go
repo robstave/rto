@@ -13,14 +13,13 @@ import (
 
 // CalendarDay represents a single day in the calendar
 type CalendarDay struct {
-	Date    time.Time
-	InMonth bool
-	Today   bool
-	Events  []Event
-}
+	Date      time.Time
+	InMonth   bool
+	Today     bool
+	Events    []Event
+	IsWeekend bool // New field to indicate weekends
 
-// Assume events are now a global variable or part of a struct for persistence
-//var allEvents []Event
+}
 
 // Global variable to store all events and manage thread safety
 var (
@@ -30,9 +29,6 @@ var (
 
 // Home renders the calendar on the home page
 func Home(c echo.Context) error {
-	c.Logger().Info("------")
-	c.Logger().Info("------")
-	c.Logger().Info("------")
 
 	// Get current date or date from query parameters
 	currentDate := time.Now()
@@ -61,6 +57,8 @@ func Home(c echo.Context) error {
 		for dayIdx, day := range week {
 			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
 			dayEvents := []Event{}
+
+			day.IsWeekend = isWeekend(day.Date) // Set IsWeekend based on the date
 
 			for _, event := range allEvents {
 				if event.Date.Format("2006-01-02") == dateStr {

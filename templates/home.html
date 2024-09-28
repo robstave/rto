@@ -8,9 +8,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <!-- Toastr CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-<!-- Toastr JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 </head>
 <body>
@@ -26,6 +26,13 @@
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
     </div>
+
+    <!-- Display Success Message -->
+    {{if .Message}}
+    <div class="message" style="text-align: center; color: green; margin-bottom: 20px;">
+        <p>{{.Message}}</p>
+    </div>
+    {{end}}
 
     <!-- Action Buttons -->
     <div class="action-buttons" style="text-align: center; margin: 20px 0;">
@@ -48,6 +55,9 @@
         <div class="legend-item">
             <span class="legend-color remote"></span> Remote
         </div>
+        <div class="legend-item">
+            <span class="legend-color weekend"></span> Weekend
+        </div>
     </div>
 
     <!-- Calendar Table -->
@@ -66,7 +76,8 @@
             {{range .}}
             <td class="
                 {{if not .InMonth}}not-current-month{{end}} 
-                {{if .Today}}today{{end}}">
+                {{if .Today}}today{{end}} 
+                {{if .IsWeekend}}weekend{{end}}">
                 <div>{{.Date.Day}}</div>
                 {{if .Events}}
                     <div class="events">
@@ -119,8 +130,7 @@
                     data: JSON.stringify({ date: date }),
                     success: function(response) {
                         if (response.success) {
-                            console.log("success")
-                            console.log(response)
+                            console.log("Success:", response)
                             // Update the span's class and text
                             if (response.newStatus === 'in') {
                                 span.removeClass('event-remote').addClass('event-in-office');
@@ -131,14 +141,15 @@
                                 span.text('Remote');
                                 span.data('status', 'remote');
                             }
-                            // Optionally, show a success message
-                         } else {
-                            // Optionally, show an error message
-                            alert('Failed to update attendance status: ' + response.message);
+                            // Optionally, show a success message using Toastr
+                            toastr.success('Attendance status updated successfully.');
+                        } else {
+                            // Optionally, show an error message using Toastr
+                            toastr.error('Failed to update attendance status: ' + response.message);
                         }
                     },
                     error: function() {
-                        alert('An error occurred while updating attendance status.');
+                        toastr.error('An error occurred while updating attendance status.');
                     }
                 });
             });
