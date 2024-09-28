@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Return to Office Helper</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"   crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <!-- Include jQuery for simplicity (optional: use vanilla JS or another library) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
@@ -83,15 +85,15 @@
                     <div class="events">
                         {{range .Events}}
                             {{if eq .Type "holiday"}}
-                                <span class="event-holiday">{{.Description}}</span>
+                                <span class="event-holiday"><i class="fa-solid fa-umbrella-beach"></i>{{.Description}}</span>
                             {{else if eq .Type "vacation"}}
-                                <span class="event-vacation">{{.Description}}</span>
+                                <span class="event-vacation"><i class="fa-solid fa-plane"></i>{{.Description}}</span>
                             {{else if eq .Type "attendance"}}
-                                <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}" 
-                                      data-date="{{.Date.Format "2006-01-02"}}" 
-                                      data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
-                                    {{if .IsInOffice}}In Office{{else}}Remote{{end}}
-                                </span>
+                            <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}" 
+                            data-date="{{.Date.Format "2006-01-02"}}" 
+                            data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
+                          {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i class="fa-solid fa-home"></i> Remote{{end}}
+                      </span>
                             {{end}}
                         {{end}}
                     </div>
@@ -101,6 +103,9 @@
         </tr>
         {{end}}
     </table>
+
+ 
+
 
     <!-- Legend for Toggle -->
     <div class="legend">
