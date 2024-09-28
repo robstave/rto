@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <title>Return to Office Helper</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Include jQuery for simplicity (optional: use vanilla JS or another library) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 </head>
 <body>
     <h1 style="text-align: center;">Return to Office Calendar</h1>
@@ -68,11 +76,11 @@
                             {{else if eq .Type "vacation"}}
                                 <span class="event-vacation">{{.Description}}</span>
                             {{else if eq .Type "attendance"}}
-                                {{if .IsInOffice}}
-                                    <span class="event-in-office">In Office</span>
-                                {{else}}
-                                    <span class="event-remote">Remote</span>
-                                {{end}}
+                                <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}" 
+                                      data-date="{{.Date.Format "2006-01-02"}}" 
+                                      data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
+                                    {{if .IsInOffice}}In Office{{else}}Remote{{end}}
+                                </span>
                             {{end}}
                         {{end}}
                     </div>
@@ -82,5 +90,59 @@
         </tr>
         {{end}}
     </table>
+
+    <!-- Legend for Toggle -->
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-color toggle-success"></span> Toggled Successfully
+        </div>
+        <div class="legend-item">
+            <span class="legend-color toggle-failure"></span> Toggle Failed
+        </div>
+    </div>
+
+    <!-- JavaScript for Toggling Attendance -->
+    <script>
+        $(document).ready(function() {
+            // Handle click on attendance toggle
+            $('.toggle-attendance').on('click', function() {
+                var span = $(this);
+                var date = span.data('date');
+                var currentStatus = span.data('status'); // 'in' or 'remote'
+                var newStatus = currentStatus === 'in' ? 'remote' : 'in';
+
+                // Send AJAX POST request to toggle attendance
+                $.ajax({
+                    url: '/toggle-attendance',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ date: date }),
+                    success: function(response) {
+                        if (response.success) {
+                            console.log("success")
+                            console.log(response)
+                            // Update the span's class and text
+                            if (response.newStatus === 'in') {
+                                span.removeClass('event-remote').addClass('event-in-office');
+                                span.text('In Office');
+                                span.data('status', 'in');
+                            } else {
+                                span.removeClass('event-in-office').addClass('event-remote');
+                                span.text('Remote');
+                                span.data('status', 'remote');
+                            }
+                            // Optionally, show a success message
+                         } else {
+                            // Optionally, show an error message
+                            alert('Failed to update attendance status: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while updating attendance status.');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

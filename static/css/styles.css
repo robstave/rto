@@ -6,7 +6,8 @@
         border-collapse: collapse;
     }
 
-    .calendar th, .calendar td {
+    .calendar th,
+    .calendar td {
         width: 14.28%;
         height: 100px;
         text-align: left;
@@ -29,12 +30,14 @@
     }
 
     .calendar td.today {
-        border: 2px solid #fbc02d; /* Darker yellow border */
+        border: 2px solid #fbc02d;
+        /* Darker yellow border */
     }
 
     /* Event Type Classes */
     .event-holiday {
-        background-color: #2196F3; /* Blue */
+        background-color: #2196F3;
+        /* Blue */
         color: white;
         padding: 2px 4px;
         border-radius: 3px;
@@ -44,7 +47,8 @@
     }
 
     .event-vacation {
-        background-color: #9C27B0; /* Purple */
+        background-color: #9C27B0;
+        /* Purple */
         color: white;
         padding: 2px 4px;
         border-radius: 3px;
@@ -54,7 +58,8 @@
     }
 
     .event-in-office {
-        background-color: #4CAF50; /* Green */
+        background-color: #4CAF50;
+        /* Green */
         color: white;
         padding: 2px 4px;
         border-radius: 3px;
@@ -64,7 +69,8 @@
     }
 
     .event-remote {
-        background-color: #F44336; /* Red */
+        background-color: #F44336;
+        /* Red */
         color: white;
         padding: 2px 4px;
         border-radius: 3px;
@@ -121,24 +127,55 @@
     }
 
     .legend-color.holiday {
-        background-color: #2196F3; /* Blue */
+        background-color: #2196F3;
+        /* Blue */
     }
 
     .legend-color.vacation {
-        background-color: #9C27B0; /* Purple */
+        background-color: #9C27B0;
+        /* Purple */
     }
 
     .legend-color.in-office {
-        background-color: #4CAF50; /* Green */
+        background-color: #4CAF50;
+        /* Green */
     }
 
     .legend-color.remote {
-        background-color: #F44336; /* Red */
+        background-color: #F44336;
+        /* Red */
     }
+
+    /* Make attendance indicators look clickable */
+    .toggle-attendance {
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 3px;
+        display: inline-block;
+        transition: background-color 0.3s ease;
+    }
+
+    .toggle-attendance:hover {
+        opacity: 0.8;
+    }
+
+    /* Optional: Success and Failure Indicators */
+    .legend-color.toggle-success {
+        background-color: #4CAF50;
+        /* Green */
+    }
+
+    .legend-color.toggle-failure {
+        background-color: #F44336;
+        /* Red */
+    }
+
 
     /* Responsive Design */
     @media (max-width: 768px) {
-        .calendar th, .calendar td {
+
+        .calendar th,
+        .calendar td {
             height: 80px;
             padding: 5px;
             font-size: 14px;
@@ -146,9 +183,37 @@
     }
 
     @media (max-width: 480px) {
-        .calendar th, .calendar td {
+
+        .calendar th,
+        .calendar td {
             height: 60px;
             padding: 2px;
             font-size: 12px;
         }
     }
+
+
+
+    /* Toggle Legend Styles */
+.legend-color.toggle-success {
+    background-color: #4CAF50; /* Green */
+}
+
+.legend-color.toggle-failure {
+    background-color: #F44336; /* Red */
+}
+
+/* Optional: Add a border or shadow to differentiate toggle indicators */
+.legend-color.toggle-success,
+.legend-color.toggle-failure {
+    border: 1px solid #333;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhance the legend container for better spacing on smaller screens */
+@media (max-width: 600px) {
+    .legend {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

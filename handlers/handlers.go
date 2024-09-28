@@ -67,6 +67,96 @@ func AddEvent(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
+// ToggleAttendanceRequest represents the JSON payload for toggling attendance
+type ToggleAttendanceRequest struct {
+	Date string `json:"date"` // Expected format: YYYY-MM-DD
+}
+
+// ToggleAttendanceResponse represents the JSON response after toggling
+type ToggleAttendanceResponse struct {
+	Success   bool   `json:"success"`
+	NewStatus string `json:"newStatus,omitempty"` // "in" or "remote"
+	Message   string `json:"message,omitempty"`
+}
+
+// ToggleAttendance handles toggling attendance status for a given date
+func ToggleAttendance(c echo.Context) error {
+
+	req := new(ToggleAttendanceRequest)
+	if err := c.Bind(req); err != nil {
+		log.Printf("Error binding request: %v", err)
+		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Invalid request payload.",
+		})
+	}
+	log.Println("togglr yo", req.Date)
+	// Parse the date
+	eventDate, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		log.Printf("Error parsing date: %v", err)
+		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Invalid date format. Expected YYYY-MM-DD.",
+		})
+	}
+
+	// Lock events for writing
+	eventsLock.Lock()
+	defer eventsLock.Unlock()
+	log.Println("searching events len:", len(allEvents))
+	// Find the attendance event on the given date
+	found := false
+	for i, event := range allEvents {
+		log.Println("x", event.Type, event.Date, eventDate)
+		if sameDay(event.Date, eventDate) && event.Type == "attendance" {
+			// Toggle the IsInOffice flag
+			allEvents[i].IsInOffice = !event.IsInOffice
+			log.Println("found and toggled", allEvents[i].IsInOffice)
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return c.JSON(http.StatusNotFound, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Attendance event not found on the specified date.",
+		})
+	}
+
+	// Optionally, save the updated events to events.json for persistence
+	// Uncomment the following lines if you wish to persist changes
+
+	/*
+		err = SaveEvents("data/events.json")
+		if err != nil {
+			log.Printf("Error saving events: %v", err)
+			return c.JSON(http.StatusInternalServerError, ToggleAttendanceResponse{
+				Success: false,
+				Message: "Failed to save updated events.",
+			})
+		}
+	*/
+
+	// Determine the new status
+	newStatus := "remote"
+	for _, event := range allEvents {
+		if sameDay(event.Date, eventDate) && event.Type == "attendance" {
+			if event.IsInOffice {
+				newStatus = "in"
+			}
+			break
+		}
+	}
+
+	log.Println("done")
+	return c.JSON(http.StatusOK, ToggleAttendanceResponse{
+		Success:   true,
+		NewStatus: newStatus,
+	})
+}
+
 // ShowPrefs renders the preferences page with current default in-office days
 func ShowPrefs(c echo.Context) error {
 	preferencesLock.RLock()

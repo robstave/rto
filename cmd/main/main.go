@@ -67,6 +67,10 @@ func main() {
 	preferencesPath := filepath.Join("data", "preferences.json")
 	handlers.InitializePreferences(preferencesPath)
 
+	// Register the new route for toggling attendance
+	e.POST("/toggle-attendance", handlers.ToggleAttendance)
+	log.Println("Route '/toggle-attendance' registered with handlers.ToggleAttendance")
+
 	// Register the new route for adding default days
 	e.POST("/prefs/add-default-days", handlers.AddDefaultDays)
 	log.Println("Route '/prefs/add-default-days' registered with handlers.AddDefaultDays")
