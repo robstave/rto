@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
+
 	"os"
 	"time"
 )
@@ -23,7 +23,7 @@ type Event struct {
 func InitializeEvents(holidaysPath string, eventsPath string) {
 	holidays, err := LoadHolidays(holidaysPath)
 	if err != nil {
-		log.Printf("Error loading holidays: %v", err)
+		logger.Error("Error loading holidays", "error", err)
 		allEvents = []Event{}
 		return
 	}
@@ -40,7 +40,9 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 	// Load attendance events from events.json
 	attendanceEvents, err := LoadAttendanceEvents(eventsPath)
 	if err != nil {
-		log.Printf("Error loading attendance events: %v", err)
+		logger.Error("Error loading attendance events:",
+			"error", err)
+
 		attendanceEvents = []Event{}
 	}
 
@@ -50,7 +52,12 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 		if _, exists := eventMap[key]; !exists {
 			eventMap[key] = a
 		} else {
-			log.Printf("Duplicate event found on %s with type %s. Skipping.", a.Date.Format("2006-01-02"), a.Type)
+			logger.Info(
+				"Duplicate event found. Skipping.",
+				"date", a.Date.Format("2006-01-02"),
+				"type", a.Type,
+			)
+
 		}
 	}
 
@@ -60,7 +67,7 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 		allEvents = append(allEvents, e)
 	}
 
-	log.Printf("Events Loaded: len= %v", len(allEvents))
+	logger.Info("Events Loaded", "len", len(allEvents))
 }
 
 // LoadAttendanceEvents loads attendance events from a JSON file
@@ -89,13 +96,14 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 	}
 	// Ensure date parsing
 	var events []Event
-	for i, e := range rawEvents2 {
-		log.Println("1")
-		//parsedDate, err := time.Parse("2006-01-02", e.Date.Format("2006-01-02"))
-		//parsedDate, err := time.Parse("2006-01-02", e.Date)
+	for _, e := range rawEvents2 {
+
 		parsedDate, err := parseDate(e.Date)
 		if err != nil {
-			log.Printf("Invalid date format in events.json %v for event %v: %v", i, e.Description, err)
+			logger.Error(
+				"Invalid date format in events.json",
+				"event", e.Description,
+				"error", err)
 			continue
 		}
 
@@ -120,7 +128,7 @@ type RawHoliday struct {
 // LoadHolidays loads holidays and vacations from a JSON file
 func LoadHolidays(filePath string) ([]Event, error) {
 
-	log.Println("loading Holidays")
+	logger.Info("loading Holidays")
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -141,9 +149,7 @@ func LoadHolidays(filePath string) ([]Event, error) {
 	events, processingErrors := processRawHolidays(rawEvents)
 
 	if len(processingErrors) > 0 {
-		// Optionally, you can aggregate errors or handle them as needed
-		log.Printf("Encountered %d errors while processing holidays.", len(processingErrors))
-		// For simplicity, returning nil for errors here. Adjust as needed.
+		logger.Error("Encountered errors while processing holidays.", "len", len(processingErrors))
 	}
 
 	return events, nil
@@ -158,7 +164,7 @@ func processRawHolidays(rawEvents []RawHoliday) ([]Event, []error) {
 	for _, re := range rawEvents {
 		parsedDate, err := parseDate(re.Date)
 		if err != nil {
-			log.Printf("Invalid date format in holidays.json: %v", err)
+			logger.Error("Invalid date format in holidays.json", "error", err)
 			errorsList = append(errorsList, err)
 			continue
 		}

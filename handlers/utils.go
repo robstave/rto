@@ -11,12 +11,6 @@ func sameDay(a, b time.Time) bool {
 	return yearA == yearB && monthA == monthB && dayA == dayB
 }
 
-// isWeekend determines if a given date is Saturday or Sunday
-func isWeekend(t time.Time) bool {
-	weekday := t.Weekday()
-	return weekday == time.Saturday || weekday == time.Sunday
-}
-
 // calculateInOfficeAverage computes the number of in-office days and total days in the quarter
 func calculateInOfficeAverage(events []Event, startDate time.Time, endDate time.Time) (int, int) {
 	// Define the quarter date range: October 1 to December 31 of the current year
@@ -24,7 +18,6 @@ func calculateInOfficeAverage(events []Event, startDate time.Time, endDate time.
 	// Calculate total days in the quarter
 	totalDays := int(endDate.Sub(startDate).Hours()/24) + 1 // +1 to include the end date
 
-	// Initialize in-office counter
 	inOfficeCount := 0
 
 	// Iterate through all events and count in-office days within the quarter
@@ -51,7 +44,6 @@ func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
 	daysToSubtract := int(weekday) // Sunday = 0
 	startDate := firstOfMonth.AddDate(0, 0, -daysToSubtract)
 
-	// Iterate over the weeks
 	for week := 0; week < 6; week++ { // Up to 6 weeks in a month view
 		var weekDays []CalendarDay
 		for day := 0; day < 7; day++ {

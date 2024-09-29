@@ -58,19 +58,11 @@ func Home(c echo.Context) error {
 			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
 			dayEvents := []Event{}
 
-			day.IsWeekend = isWeekend(day.Date) // Set IsWeekend based on the date
-
 			for _, event := range allEvents {
 				if event.Date.Format("2006-01-02") == dateStr {
 					dayEvents = append(dayEvents, event)
 				}
 			}
-
-			//// Convert to event descriptions for the template
-			//var eventDescriptions []string
-			//for _, e := range dayEvents {
-			//	eventDescriptions = append(eventDescriptions, e.Description)
-			//}
 
 			weeks[weekIdx][dayIdx].Events = dayEvents
 
@@ -135,7 +127,8 @@ func Home(c echo.Context) error {
 
 	// Render the template
 	if err := c.Render(http.StatusOK, "home.html", data); err != nil {
-		c.Logger().Error("Template rendering error:", err)
+		logger.Error("Template rendering error:", "error", err)
+
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 

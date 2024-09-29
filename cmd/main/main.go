@@ -31,6 +31,14 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	log.Println("set logger")
+
+	handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
+
+	//lg := handlers.GetLogger()
+	//mw := slogecho.New(lg)
+	//e.Use()
+
 	funcMap := template.FuncMap{
 		"formatDate": func(t time.Time, layout string) string {
 			return t.Format(layout)
@@ -56,7 +64,6 @@ func main() {
 
 	// Routes
 	e.GET("/", handlers.Home)
-	log.Println("Route '/' registered with handlers.Home")
 
 	// Initialize events
 	log.Println("init events")
@@ -69,15 +76,14 @@ func main() {
 
 	// Register the new route for toggling attendance
 	e.POST("/toggle-attendance", handlers.ToggleAttendance)
-	log.Println("Route '/toggle-attendance' registered with handlers.ToggleAttendance")
 
 	// Register the new route for adding default days
 	e.POST("/prefs/add-default-days", handlers.AddDefaultDays)
-	log.Println("Route '/prefs/add-default-days' registered with handlers.AddDefaultDays")
 
 	log.Println("starting")
 	// Start the server on port 8761
 	if err := e.Start(":8761"); err != nil && err != http.ErrServerClosed {
 		log.Fatal("shutting down the server")
 	}
+
 }

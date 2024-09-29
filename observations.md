@@ -32,4 +32,11 @@ Nailed it
 Refactoring for better testing
 Some functions were large and could be broken down to pure functions.  Thats me intervening.
 
+Add Slog.
+This had a bug that I could have found if I asked correctly.  Slog had a global variable masked by a local  "logger"
+I ended up refactoringa bit more manually, going from log to slog (structured log) was a chore.  In retrospect, it 
+should have be easier if I asked the right stuff
+
+Use Slog in Echo
+
 Make days dynamic update

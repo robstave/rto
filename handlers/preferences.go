@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"sync"
 )
@@ -23,7 +22,8 @@ var (
 func InitializePreferences(filePath string) {
 	err := LoadPreferences(filePath)
 	if err != nil {
-		log.Printf("Error loading preferences: %v", err)
+		logger.Error("Error loading preferences", "error", err)
+
 		// Set default preferences if loading fails
 		preferencesLock.Lock()
 		preferences = Preferences{
@@ -31,7 +31,8 @@ func InitializePreferences(filePath string) {
 		}
 		preferencesLock.Unlock()
 	} else {
-		log.Println("Preferences loaded successfully.")
+		logger.Info("Preferences loaded successfully.")
+
 	}
 }
 
