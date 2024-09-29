@@ -233,3 +233,197 @@ func TestLoadHolidays(t *testing.T) {
 		})
 	}
 }
+
+// TestProcessRawHolidays tests the processRawHolidays function.
+func TestProcessRawHolidays(t *testing.T) {
+	tests := []struct {
+		name           string
+		rawEvents      []RawHoliday
+		expectedEvents []Event
+		expectedErrors int
+	}{
+		{
+			name: "All Valid Holidays",
+			rawEvents: []RawHoliday{
+				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
+				{Date: "2023-11-23", Name: "Thanksgiving", Type: "holiday"},
+			},
+			expectedEvents: []Event{
+				{
+					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
+					Description: "Christmas Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.November, 23, 0, 0, 0, 0, time.UTC),
+					Description: "Thanksgiving",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+			},
+			expectedErrors: 0,
+		},
+		{
+			name: "Some Invalid Dates",
+			rawEvents: []RawHoliday{
+				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
+				{Date: "invalid-date", Name: "Invalid Holiday", Type: "holiday"},
+				{Date: "2023-11-23", Name: "Thanksgiving", Type: "holiday"},
+				{Date: "2023-02-30", Name: "Impossible Date", Type: "holiday"}, // Invalid date
+			},
+			expectedEvents: []Event{
+				{
+					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
+					Description: "Christmas Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.November, 23, 0, 0, 0, 0, time.UTC),
+					Description: "Thanksgiving",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+			},
+			expectedErrors: 2,
+		},
+		{
+			name: "All Invalid Dates",
+			rawEvents: []RawHoliday{
+				{Date: "invalid-date-1", Name: "Invalid Holiday 1", Type: "holiday"},
+				{Date: "invalid-date-2", Name: "Invalid Holiday 2", Type: "holiday"},
+			},
+			expectedEvents: []Event{},
+			expectedErrors: 2,
+		},
+		{
+			name: "Mixed Event Types with Valid and Invalid Dates",
+			rawEvents: []RawHoliday{
+				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
+				{Date: "2023-11-23", Name: "Thanksgiving", Type: "holiday"},
+				{Date: "2023-01-01", Name: "New Year's Day", Type: "holiday"},
+				{Date: "2023-02-30", Name: "Invalid Date", Type: "holiday"}, // Invalid
+				{Date: "invalid-date", Name: "Another Invalid", Type: "holiday"},
+			},
+			expectedEvents: []Event{
+				{
+					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
+					Description: "Christmas Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.November, 23, 0, 0, 0, 0, time.UTC),
+					Description: "Thanksgiving",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
+					Description: "New Year's Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+			},
+			expectedErrors: 2,
+		},
+		{
+			name:           "Empty RawEvents",
+			rawEvents:      []RawHoliday{},
+			expectedEvents: []Event{},
+			expectedErrors: 0,
+		},
+		{
+			name: "Duplicate Holidays on Same Date",
+			rawEvents: []RawHoliday{
+				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
+				{Date: "2023-12-25", Name: "Duplicate Christmas", Type: "holiday"},
+			},
+			expectedEvents: []Event{
+				{
+					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
+					Description: "Christmas Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
+					Description: "Duplicate Christmas",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+			},
+			expectedErrors: 0,
+		},
+		{
+			name: "Holidays with Different Types",
+			rawEvents: []RawHoliday{
+				{Date: "2023-07-04", Name: "Independence Day", Type: "holiday"},
+				{Date: "2023-12-26", Name: "Boxing Day", Type: "holiday"},
+				{Date: "2023-08-15", Name: "Assumption Day", Type: "holiday"},
+			},
+			expectedEvents: []Event{
+				{
+					Date:        time.Date(2023, time.July, 4, 0, 0, 0, 0, time.UTC),
+					Description: "Independence Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.December, 26, 0, 0, 0, 0, time.UTC),
+					Description: "Boxing Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+				{
+					Date:        time.Date(2023, time.August, 15, 0, 0, 0, 0, time.UTC),
+					Description: "Assumption Day",
+					IsInOffice:  false,
+					Type:        "holiday",
+				},
+			},
+			expectedErrors: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			events, errorsList := processRawHolidays(tt.rawEvents)
+
+			// Check the number of events
+			if len(events) != len(tt.expectedEvents) {
+				t.Errorf("Expected %d events, got %d", len(tt.expectedEvents), len(events))
+			}
+
+			// Check each event's content
+			for i, expectedEvent := range tt.expectedEvents {
+				if i >= len(events) {
+					break
+				}
+				actualEvent := events[i]
+				if !sameDay(actualEvent.Date, expectedEvent.Date) {
+					t.Errorf("Event %d: expected date %v, got %v", i, expectedEvent.Date, actualEvent.Date)
+				}
+				if actualEvent.Description != expectedEvent.Description {
+					t.Errorf("Event %d: expected description '%s', got '%s'", i, expectedEvent.Description, actualEvent.Description)
+				}
+				if actualEvent.IsInOffice != expectedEvent.IsInOffice {
+					t.Errorf("Event %d: expected IsInOffice %v, got %v", i, expectedEvent.IsInOffice, actualEvent.IsInOffice)
+				}
+				if actualEvent.Type != expectedEvent.Type {
+					t.Errorf("Event %d: expected Type '%s', got '%s'", i, expectedEvent.Type, actualEvent.Type)
+				}
+			}
+
+			// Check the number of errors
+			if len(errorsList) != tt.expectedErrors {
+				t.Errorf("Expected %d errors, got %d", tt.expectedErrors, len(errorsList))
+			}
+		})
+	}
+}
+
+// TestLoadHolidays tests the LoadHolidays function by providing mock data.
+// Note: Since LoadHolidays reads from a file, you'd typically use a temporary file for testing.
+// However, since the user wants to focus on making the processing function testable, we'll skip this for now.

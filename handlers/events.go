@@ -110,6 +110,13 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 	return events, nil
 }
 
+// RawHoliday represents the structure of each holiday entry in the JSON file.
+type RawHoliday struct {
+	Date string `json:"date"`
+	Name string `json:"name"`
+	Type string `json:"type"` // e.g., "holiday", "vacation"
+}
+
 // LoadHolidays loads holidays and vacations from a JSON file
 func LoadHolidays(filePath string) ([]Event, error) {
 
@@ -125,21 +132,34 @@ func LoadHolidays(filePath string) ([]Event, error) {
 		return nil, err
 	}
 
-	var rawEvents []struct {
-		Date string `json:"date"`
-		Name string `json:"name"`
-		Type string `json:"type"`
-	}
+	var rawEvents []RawHoliday
 
 	if err := json.Unmarshal(byteValue, &rawEvents); err != nil {
 		return nil, err
 	}
 
+	events, processingErrors := processRawHolidays(rawEvents)
+
+	if len(processingErrors) > 0 {
+		// Optionally, you can aggregate errors or handle them as needed
+		log.Printf("Encountered %d errors while processing holidays.", len(processingErrors))
+		// For simplicity, returning nil for errors here. Adjust as needed.
+	}
+
+	return events, nil
+}
+
+// processRawHolidays converts raw holiday data into Event structs.
+// It returns a slice of Events and a slice of errors encountered during processing.
+func processRawHolidays(rawEvents []RawHoliday) ([]Event, []error) {
 	events := []Event{}
+	errorsList := []error{}
+
 	for _, re := range rawEvents {
 		parsedDate, err := parseDate(re.Date)
 		if err != nil {
 			log.Printf("Invalid date format in holidays.json: %v", err)
+			errorsList = append(errorsList, err)
 			continue
 		}
 		events = append(events, Event{
@@ -150,7 +170,7 @@ func LoadHolidays(filePath string) ([]Event, error) {
 		})
 	}
 
-	return events, nil
+	return events, errorsList
 }
 
 // parseDate tries to parse a date string using multiple layouts.

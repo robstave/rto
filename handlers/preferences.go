@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -60,21 +59,4 @@ func LoadPreferences(filePath string) error {
 	preferencesLock.Unlock()
 
 	return nil
-}
-
-// isDefaultInOffice checks if the given day abbreviation is a default in-office day
-func isDefaultInOffice(day string) bool {
-	preferencesLock.RLock()
-	defer preferencesLock.RUnlock()
-
-	defaultDays := strings.Split(preferences.DefaultDays, ",")
-
-	for _, d := range defaultDays {
-		d = strings.TrimSpace(d)
-		if strings.EqualFold(d, day) {
-			return true
-		}
-	}
-
-	return false
 }
