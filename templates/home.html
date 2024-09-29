@@ -25,12 +25,13 @@
 
     <!-- Navigation Links with Current Month and Year -->
     <div class="navigation">
-        <span style="font-size: 1.2em; font-weight: bold;">{{.CurrentDate.Format "January 2006"}}</span>
-        <br>
         <!-- Previous Month -->
         <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous
             Month</a>
-
+    
+        <!-- Current Month -->
+        <span class="current-month">{{.CurrentDate.Format "January 2006"}}</span>
+    
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
     </div>
@@ -44,9 +45,9 @@
 
 
           <!-- Attendance Bar Chart -->
-    <div class="attendance-chart" style="max-width: 800px; margin: 40px auto; height: 100px; position: relative;">
+    <div class="attendance-chart" style="max-width: 800px; margin: 40px auto; height: 50px; position: relative;">
         <h3 style="text-align: center; font-size: 1.2em;">Weekly In-Office Days</h3>
-        <canvas id="attendanceChart" style="height: 100px; width: 100%;"></canvas>
+        <canvas id="attendanceChart" style="height: 50px; width: 100%;"></canvas>
     </div>
 
 

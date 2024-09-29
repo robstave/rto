@@ -9,7 +9,8 @@
     --color-border: #e0e0e0;
     --color-hover: #f1f1f1;
     --color-progress-bg: #e0e0e0;
-    --color-progress-fill: #4CAF50; /* Default to green */
+    --color-progress-fill: #4CAF50;
+    /* Default to green */
 }
 
 body {
@@ -46,19 +47,20 @@ p {
 /* Navigation */
 .navigation {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    gap: 20px;
+    /* Space between items */
     margin-bottom: 20px;
 }
 
 .navigation .current-month {
     font-size: 1.2em;
     font-weight: bold;
-    margin-bottom: 10px;
 }
 
+/* Navigation Links */
 .navigation a {
-    margin: 0 10px;
     text-decoration: none;
     color: #007BFF;
     font-weight: bold;
@@ -85,7 +87,7 @@ p {
 /* Attendance Average */
 .attendance-average {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 50px !important;
 }
 
 .attendance-average h3 {
@@ -108,6 +110,7 @@ p {
     background-color: var(--color-progress-bg);
     border-radius: 10px;
     overflow: hidden;
+    /* Prevents fill from overflowing */
     height: 20px;
 }
 
@@ -124,7 +127,8 @@ p {
     width: 100%;
     max-width: 800px;
     margin: 40px auto;
-    height: 120px; /* Accommodate title and chart */
+    height: 70px;
+    /* Accommodate title and chart */
     position: relative;
 }
 
@@ -135,7 +139,7 @@ p {
 }
 
 .attendance-chart canvas {
-    height: 80px !important;
+    height: 50px !important;
     width: 100% !important;
 }
 
@@ -161,7 +165,8 @@ p {
 }
 
 .action-buttons button:hover {
-    background-color: #388E3C; /* Darker green */
+    background-color: #388E3C;
+    /* Darker green */
     transform: translateY(-2px);
 }
 
@@ -210,11 +215,13 @@ p {
 }
 
 .legend-color.toggle-success {
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50;
+    /* Green */
 }
 
 .legend-color.toggle-failure {
-    background-color: #F44336; /* Red */
+    background-color: #F44336;
+    /* Red */
 }
 
 /* Calendar Table */
@@ -251,8 +258,10 @@ p {
 }
 
 .calendar td.today {
-    border: 2px solid #FF9800; /* Orange border */
-    background-color: #FFF3E0; /* Light orange background */
+    border: 2px solid #FF9800;
+    /* Orange border */
+    background-color: #FFF3E0;
+    /* Light orange background */
 }
 
 .calendar td.today .events .event-in-office,
@@ -308,7 +317,8 @@ p {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 1000; /* Ensure it appears above other elements */
+    z-index: 1000;
+    /* Ensure it appears above other elements */
 }
 
 /* Message Styling */
@@ -321,6 +331,7 @@ p {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+
     .calendar th,
     .calendar td {
         height: 80px;
@@ -360,6 +371,7 @@ p {
 }
 
 @media (max-width: 480px) {
+
     .calendar th,
     .calendar td {
         height: 60px;
@@ -412,7 +424,8 @@ button {
 }
 
 button:hover {
-    background-color: #388E3C; /* Darker green */
+    background-color: #388E3C;
+    /* Darker green */
     transform: translateY(-2px);
 }
 
@@ -433,13 +446,16 @@ button:hover {
 
 /* Weekend Styling */
 .weekend {
-    background-color: #d3d3d3; /* Darker gray background */
-    color: #505050; /* Darker gray text */
+    background-color: #d3d3d3;
+    /* Darker gray background */
+    color: #505050;
+    /* Darker gray text */
     border: 2px solid #a0a0a0;
 }
 
 .weekend:hover {
-    background-color: #c0c0c0; /* Slightly darker on hover */
+    background-color: #c0c0c0;
+    /* Slightly darker on hover */
 }
 
 .weekend .toggle-attendance {
@@ -447,4 +463,12 @@ button:hover {
     /* Disable clicking on attendance toggles for weekends */
     opacity: 0.6;
     /* Slightly faded to indicate non-interactive */
+}
+
+
+
+/* Attendance Chart Tooltip (Optional) */
+.chart-tooltip {
+    font-size: 14px;
+    color: var(--color-text);
 }
