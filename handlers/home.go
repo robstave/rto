@@ -74,10 +74,6 @@ func Home(c echo.Context) error {
 
 			weeks[weekIdx][dayIdx].Events = dayEvents
 
-			// Mark today if applicable
-			//if day.Date.Equal(today) {
-			//	weeks[weekIdx][dayIdx].Today = true
-			//}
 		}
 	}
 
@@ -94,6 +90,16 @@ func Home(c echo.Context) error {
 		}
 	}
 
+	// Calculate In-Office Average
+	inOfficeCount, totalDays := calculateInOfficeAverage()
+
+	average := 0.0
+	averageDays := 0.0
+	if totalDays > 0 {
+		average = (float64(inOfficeCount) / float64(totalDays)) * 100
+		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 //average days/week
+	}
+
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,
 		"Weeks":       weeks,
@@ -107,6 +113,10 @@ func Home(c echo.Context) error {
 			"month": nextMonthDate.Format("01"),
 			"day":   nextMonthDate.Format("02"),
 		},
+		"InOfficeCount": inOfficeCount,
+		"TotalDays":     totalDays,
+		"Average":       average,
+		"AverageDays":   averageDays,
 	}
 
 	//log
@@ -128,47 +138,4 @@ func Home(c echo.Context) error {
 	}
 
 	return nil
-}
-
-// getCalendarMonth generates all weeks for the given month, including days from adjacent months
-func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
-	var weeks [][]CalendarDay
-
-	// Normalize to the first day of the month
-	firstOfMonth := time.Date(currentDate.Year(), currentDate.Month(), 1, 0, 0, 0, 0, currentDate.Location())
-
-	// Find the first Sunday before or on the first day of the month
-	weekday := firstOfMonth.Weekday()
-	daysToSubtract := int(weekday) // Sunday = 0
-	startDate := firstOfMonth.AddDate(0, 0, -daysToSubtract)
-
-	// Iterate over the weeks
-	for week := 0; week < 6; week++ { // Up to 6 weeks in a month view
-		var weekDays []CalendarDay
-		for day := 0; day < 7; day++ {
-			currentDay := startDate.AddDate(0, 0, week*7+day)
-			inMonth := currentDay.Month() == firstOfMonth.Month()
-			weekDays = append(weekDays, CalendarDay{
-				Date:    currentDay,
-				InMonth: inMonth,
-			})
-		}
-		weeks = append(weeks, weekDays)
-
-		// Check if all days in the current week are from the next month
-		allDaysNextMonth := true
-		for _, day := range weekDays {
-			if day.Date.Month() == firstOfMonth.Month() {
-				allDaysNextMonth = false
-				break
-			}
-		}
-
-		if allDaysNextMonth {
-			weeks = weeks[:len(weeks)-1] // Remove the last week added
-			break
-		}
-	}
-
-	return weeks
 }

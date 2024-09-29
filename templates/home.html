@@ -1,3 +1,5 @@
+<!-- templates/home.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +29,28 @@
 
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
+    </div>
+
+    <!-- Display In-Office Average -->
+    <div class="attendance-average" style="text-align: center; margin-bottom: 20px;">
+        <h3>In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
+        <p>In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}}</p>
+
+        <!-- Optional: Progress Bar -->
+        <div class="progress-bar-container" style="width: 50%; margin: 10px auto;">
+            <div class="progress-bar" style="width: 100%; background-color: #e0e0e0; border-radius: 5px;">
+                <div class="progress-fill" style="
+                    width: {{.Average}}%;
+                    background-color: #4CAF50;
+                    height: 20px;
+                    border-radius: 5px;
+                    transition: width 0.5s ease;
+                "></div>
+            </div>
+            <p style="margin-top: 5px;">{{printf "%.2f" .Average}}% In Office</p>
+        </div>
+
+
     </div>
 
     <!-- Display Success Message -->
@@ -104,9 +128,6 @@
         {{end}}
     </table>
 
- 
-
-
     <!-- Legend for Toggle -->
     <div class="legend">
         <div class="legend-item">
@@ -139,11 +160,11 @@
                             // Update the span's class and text
                             if (response.newStatus === 'in') {
                                 span.removeClass('event-remote').addClass('event-in-office');
-                                span.text('In Office');
+                                span.html('<i class="fa-solid fa-building"></i> In Office');
                                 span.data('status', 'in');
                             } else {
                                 span.removeClass('event-in-office').addClass('event-remote');
-                                span.text('Remote');
+                                span.html('<i class="fa-solid fa-home"></i> Remote');
                                 span.data('status', 'remote');
                             }
                             // Optionally, show a success message using Toastr

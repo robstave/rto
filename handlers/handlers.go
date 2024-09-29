@@ -49,23 +49,6 @@ func AddEvent(c echo.Context) error {
 	// Append the new event to allEvents
 	allEvents = append(allEvents, newEvent)
 
-	// Save to events.json
-	/*
-		file, err := os.Create("data/events.json")
-		if err != nil {
-			log.Printf("Error creating events.json: %v", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
-		defer file.Close()
-
-		encoder := json.NewEncoder(file)
-		encoder.SetIndent("", "    ")
-		if err := encoder.Encode(allEvents); err != nil {
-			log.Printf("Error encoding events to JSON: %v", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
-	*/
-
 	// Redirect back to the calendar
 	return c.Redirect(http.StatusSeeOther, "/")
 }
@@ -282,13 +265,6 @@ func AddDefaultDays(c echo.Context) error {
 	// To display messages, you can use query parameters or session-based flash messages
 	// For simplicity, we'll redirect without messages
 	return c.Redirect(http.StatusSeeOther, "/prefs")
-}
-
-// sameDay checks if two dates are on the same calendar day
-func sameDay(a, b time.Time) bool {
-	yearA, monthA, dayA := a.Date()
-	yearB, monthB, dayB := b.Date()
-	return yearA == yearB && monthA == monthB && dayA == dayB
 }
 
 // SaveEvents saves the current list of events to the specified JSON file.
