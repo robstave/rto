@@ -94,6 +94,19 @@ func Home(c echo.Context) error {
 		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 //average days/week
 	}
 
+	// Fetch target days from preferences
+	/*
+		preferencesLock.RLock()
+		targetDaysStr := preferences.TargetDays // Assuming TargetDays is added to Preferences
+		preferencesLock.RUnlock()
+
+		targetDays, err := strconv.ParseFloat(targetDaysStr, 64)
+		if err != nil {
+			// Fallback to default target if parsing fails
+			targetDays = 2.5
+		}
+	*/
+
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,
 		"Weeks":       weeks,

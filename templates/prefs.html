@@ -13,32 +13,33 @@
         <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
     </div>
 
-    <!-- Display Default In-Office Days -->
-    <div class="preferences" style="max-width: 800px; margin: 0 auto; text-align: center;">
-        <h2>Default In-Office Days</h2>
-        <p>{{.Preferences.DefaultDays}}</p>
-    </div>
-
-    <!-- Add Default Days Button -->
-    <div style="text-align: center; margin-top: 20px;">
-        <form action="/prefs/add-default-days" method="POST">
-            <button type="submit" style="padding: 10px 20px;">Add Default Days</button>
+    <!-- Preferences Form -->
+    <div class="preferences-form" style="max-width: 600px; margin: 0 auto;">
+        <form action="/prefs/update" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label for="defaultDays">Default In-Office Days:</label><br>
+                <input type="text" id="defaultDays" name="defaultDays" value="{{.Preferences.DefaultDays}}" required placeholder="e.g., M,T,W,Th,F" style="width: 100%; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="targetDays">Target In-Office Days per Week:</label><br>
+                <input type="number" step="0.1" id="targetDays" name="targetDays" value="{{.Preferences.TargetDays}}" required placeholder="e.g., 2.5" style="width: 100%; padding: 8px;">
+            </div>
+            <button type="submit" style="padding: 10px 20px;">Save Preferences</button>
         </form>
     </div>
 
-    <!-- Optional: Success Message -->
-    {{if .SuccessMessage}}
-    <div style="max-width: 800px; margin: 20px auto; text-align: center; color: green;">
-        <p>{{.SuccessMessage}}</p>
-    </div>
-    {{end}}
-
-    <!-- Optional: Error Message -->
-    {{if .ErrorMessage}}
-    <div style="max-width: 800px; margin: 20px auto; text-align: center; color: red;">
-        <p>{{.ErrorMessage}}</p>
-    </div>
-    {{end}}
-
+       <!-- Optional: Success Message -->
+       {{if .SuccessMessage}}
+       <div style="max-width: 800px; margin: 20px auto; text-align: center; color: green;">
+           <p>{{.SuccessMessage}}</p>
+       </div>
+       {{end}}
+   
+       <!-- Optional: Error Message -->
+       {{if .ErrorMessage}}
+       <div style="max-width: 800px; margin: 20px auto; text-align: center; color: red;">
+           <p>{{.ErrorMessage}}</p>
+       </div>
+       {{end}}
 </body>
 </html>

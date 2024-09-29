@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"io/ioutil"
-
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +25,7 @@ func AddEvent(c echo.Context) error {
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		logger.Error("Error parsing date", "date", err)
+		logger.Error("Error parsing date", "fn", "AddEvent", "date", err)
 		return c.String(http.StatusBadRequest, "Invalid date format")
 	}
 
@@ -66,6 +66,7 @@ type ToggleAttendanceResponse struct {
 	TotalDays     int     `json:"totalDays,omitempty"`
 	Average       float64 `json:"average,omitempty"`
 	AverageDays   float64 `json:"averageDays,omitempty"`
+	TargetDays    float64 `json:"targetDays,omitempty"` // New field for target value
 }
 
 // ToggleAttendance handles toggling attendance status for a given date
@@ -83,7 +84,7 @@ func ToggleAttendance(c echo.Context) error {
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
-		logger.Error("Error parsing date", "error", err)
+		logger.Error("Error parsing date", "fn", "Toggle Attendance", "error", err)
 		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
 			Success: false,
 			Message: "Invalid date format. Expected YYYY-MM-DD.",
@@ -145,6 +146,17 @@ func ToggleAttendance(c echo.Context) error {
 		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 // Average days/week
 	}
 
+	// Fetch target days from preferences
+	preferencesLock.RLock()
+	targetDaysStr := preferences.TargetDays // Assuming TargetDays is added to Preferences
+	preferencesLock.RUnlock()
+
+	targetDays, err := strconv.ParseFloat(targetDaysStr, 64)
+	if err != nil {
+		// Fallback to default target if parsing fails
+		targetDays = 2.5
+	}
+
 	return c.JSON(http.StatusOK, ToggleAttendanceResponse{
 		Success:       true,
 		NewStatus:     newStatus,
@@ -152,10 +164,11 @@ func ToggleAttendance(c echo.Context) error {
 		TotalDays:     totalDays,
 		Average:       average,
 		AverageDays:   averageDays,
+		TargetDays:    targetDays,
 	})
 }
 
-// ShowPrefs renders the preferences page with current default in-office days
+// ShowPrefs renders the preferences page with current default in-office days and target
 func ShowPrefs(c echo.Context) error {
 	preferencesLock.RLock()
 	defer preferencesLock.RUnlock()
@@ -165,6 +178,49 @@ func ShowPrefs(c echo.Context) error {
 	}
 
 	return c.Render(http.StatusOK, "prefs.html", data)
+}
+
+// UpdatePreferences handles updating user preferences
+func UpdatePreferences(c echo.Context) error {
+	newDefaultDays := c.FormValue("defaultDays")
+	newTargetDays := c.FormValue("targetDays")
+
+	if newDefaultDays == "" || newTargetDays == "" {
+		return c.String(http.StatusBadRequest, "Default Days and Target Days are required.")
+	}
+
+	// Update preferences
+	preferencesLock.Lock()
+	preferences.DefaultDays = newDefaultDays
+	preferences.TargetDays = newTargetDays
+	preferencesLock.Unlock()
+
+	// Save preferences to JSON file
+	preferencesFilePath := "data/preferences.json"
+	if err := SavePreferences(preferencesFilePath); err != nil {
+		logger.Error("Error saving preferences", "error", err)
+		return c.String(http.StatusInternalServerError, "Failed to save preferences.")
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/prefs")
+}
+
+// SavePreferences saves the current preferences to the specified JSON file.
+func SavePreferences(filePath string) error {
+	preferencesLock.RLock()
+	defer preferencesLock.RUnlock()
+
+	data, err := json.MarshalIndent(preferences, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ShowAddEventForm renders the Add Event form

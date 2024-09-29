@@ -10,6 +10,8 @@ import (
 // Preferences represents user preferences
 type Preferences struct {
 	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
+	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
+
 }
 
 // Global variables to store preferences and manage thread safety

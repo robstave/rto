@@ -63,6 +63,7 @@ func main() {
 
 	e.GET("/events", handlers.EventsList)
 	e.GET("/prefs", handlers.ShowPrefs)
+	e.POST("/prefs/update", handlers.UpdatePreferences) // New route for updating preferences
 
 	// Routes
 	e.GET("/", handlers.Home)

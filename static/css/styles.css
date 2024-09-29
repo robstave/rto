@@ -1,571 +1,450 @@
-    :root {
-        --color-holiday: #2196F3;
-        --color-vacation: #9C27B0;
-        --color-in-office: #4CAF50;
-        --color-remote: #F44336;
-        --color-weekend: #d3d3d3;
-        --color-background: #ffffff;
-        --color-text: #333333;
-        --color-border: #e0e0e0;
-        --color-hover: #f1f1f1;
-    }
+:root {
+    --color-holiday: #2196F3;
+    --color-vacation: #9C27B0;
+    --color-in-office: #4CAF50;
+    --color-remote: #F44336;
+    --color-weekend: #d3d3d3;
+    --color-background: #ffffff;
+    --color-text: #333333;
+    --color-border: #e0e0e0;
+    --color-hover: #f1f1f1;
+    --color-progress-bg: #e0e0e0;
+    --color-progress-fill: #4CAF50; /* Default to green */
+}
 
-    body {
-        background-color: var(--color-background);
-        color: var(--color-text);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        font-size: 16px;
-    }
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+}
 
-    h1,
-    h2,
-    h3 {
-        font-weight: 600;
-        color: var(--color-text);
-    }
+/* Heading Styles */
+h1,
+h2,
+h3 {
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 10px 0;
+}
 
-    p {
-        margin-bottom: 1em;
-    }
+p {
+    margin-bottom: 1em;
+}
 
-    /* Calendar Styles */
-    .calendar {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-        border-collapse: collapse;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+/* Main Container */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
 
+/* Navigation */
+.navigation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.navigation .current-month {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.navigation a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navigation a:hover {
+    background-color: #007BFF;
+    color: #ffffff;
+}
+
+/* Attendance Section */
+.attendance-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 20px;
+}
+
+/* Attendance Average */
+.attendance-average {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.attendance-average h3 {
+    margin-bottom: 10px;
+}
+
+.attendance-average p {
+    margin-bottom: 10px;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    width: 50%;
+    max-width: 400px;
+    margin: 0 auto 10px auto;
+}
+
+.progress-bar {
+    width: 100%;
+    background-color: var(--color-progress-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 20px;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background-color: var(--color-progress-fill);
+    border-radius: 10px 0 0 10px;
+    transition: width 0.5s ease, background-color 0.3s ease;
+}
+
+/* Attendance Chart */
+.attendance-chart {
+    width: 100%;
+    max-width: 800px;
+    margin: 40px auto;
+    height: 120px; /* Accommodate title and chart */
+    position: relative;
+}
+
+.attendance-chart h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.attendance-chart canvas {
+    height: 80px !important;
+    width: 100% !important;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.action-buttons button {
+    padding: 10px 20px;
+    border: none;
+    background-color: var(--color-in-office);
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-buttons button:hover {
+    background-color: #388E3C; /* Darker green */
+    transform: translateY(-2px);
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.legend-color.holiday {
+    background-color: var(--color-holiday);
+}
+
+.legend-color.vacation {
+    background-color: var(--color-vacation);
+}
+
+.legend-color.in-office {
+    background-color: var(--color-in-office);
+}
+
+.legend-color.remote {
+    background-color: var(--color-remote);
+}
+
+.legend-color.weekend {
+    background-color: var(--color-weekend);
+}
+
+.legend-color.toggle-success {
+    background-color: #4CAF50; /* Green */
+}
+
+.legend-color.toggle-failure {
+    background-color: #F44336; /* Red */
+}
+
+/* Calendar Table */
+.calendar {
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto 40px auto;
+    border-collapse: collapse;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar th,
+.calendar td {
+    width: 14.28%;
+    height: 100px;
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    box-sizing: border-box;
+    position: relative;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.calendar th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    text-align: center;
+}
+
+.calendar td.not-current-month {
+    color: #a0a0a0;
+    background-color: #f9f9f9;
+}
+
+.calendar td.today {
+    border: 2px solid #FF9800; /* Orange border */
+    background-color: #FFF3E0; /* Light orange background */
+}
+
+.calendar td.today .events .event-in-office,
+.calendar td.today .events .event-remote {
+    font-weight: bold;
+}
+
+.calendar td:hover {
+    background-color: var(--color-hover);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.calendar .events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 5px;
+}
+
+.event-holiday,
+.event-vacation,
+.event-in-office,
+.event-remote {
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-holiday {
+    background-color: var(--color-holiday);
+}
+
+.event-vacation {
+    background-color: var(--color-vacation);
+}
+
+.event-in-office {
+    background-color: var(--color-in-office);
+}
+
+.event-remote {
+    background-color: var(--color-remote);
+}
+
+/* Loading Spinner */
+#loadingSpinner {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Ensure it appears above other elements */
+}
+
+/* Message Styling */
+.message {
+    text-align: center;
+    color: green;
+    margin-bottom: 20px;
+    font-size: 1em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
     .calendar th,
     .calendar td {
-        width: 14.28%;
+        height: 80px;
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .attendance-chart {
         height: 100px;
-        text-align: left;
-        vertical-align: top;
-        border: 1px solid #ddd;
-        padding: 5px 10px;
-        box-sizing: border-box;
-        position: relative;
     }
 
-    .calendar td {
-        position: relative;
-        padding: 10px;
-        height: 100px;
-        vertical-align: top;
-        background-color: #fff;
-        transition: background-color 0.3s ease;
+    .attendance-chart canvas {
+        height: 70px !important;
     }
 
-    .calendar th {
-        background-color: #f2f2f2;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .calendar td.not-current-month {
-        color: #130707;
-        background-color: #f9f9f9;
-    }
-
-
-
-    .calendar td.today {
-        border: 2px solid #FF9800;
-        /* Orange border */
-        background-color: #FFF3E0;
-        /* Light orange background */
-    }
-
-    .calendar td.today .events .event-in-office,
-    .calendar td.today .events .event-remote {
-        font-weight: bold;
-    }
-
-
-    .calendar td:hover {
-        background-color: var(--color-hover);
-        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
-
-    }
-
-    .calendar td div {
-        margin-bottom: 5px;
-    }
-
-
-    /* Event Type Classes */
-    .event-holiday {
-        background-color: #2196F3;
-        /* Blue */
-        color: white;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-top: 5px;
-        display: inline-block;
-    }
-
-    .event-vacation {
-        background-color: #9C27B0;
-        /* Purple */
-        color: white;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-top: 5px;
-        display: inline-block;
-    }
-
-    .event-in-office {
-        background-color: #4CAF50;
-        /* Green */
-        color: white;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-top: 5px;
-        display: inline-block;
-    }
-
-    .event-remote {
-        background-color: #F44336;
-        /* Red */
-        color: white;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-top: 5px;
-        display: inline-block;
-    }
-
-    .events {
-        margin-top: 5px;
-        padding-left: 0;
-        list-style-type: none;
-        font-size: 0.9em;
-        color: #333;
-    }
-
-    .events {
-        display: flex;
+    .action-buttons {
         flex-direction: column;
-        gap: 3px;
+        gap: 10px;
     }
 
-
-
-
-    .event-holiday,
-    .event-vacation,
-    .event-in-office,
-    .event-remote {
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-size: 0.75em;
-        color: #fff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .action-buttons button {
+        width: 100%;
+        max-width: 200px;
     }
-
-
-
-
-
-    /* Adjust specific event colors for better contrast */
-    .event-holiday {
-        background-color: var(--color-holiday);
-    }
-
-    .event-vacation {
-        background-color: var(--color-vacation);
-    }
-
-    .event-in-office {
-        background-color: var(--color-in-office);
-    }
-
-    .event-remote {
-        background-color: var(--color-remote);
-    }
-
-
-
-
-    .navigation {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .navigation a {
-        margin: 0 15px;
-        text-decoration: none;
-        color: #007BFF;
-        font-weight: bold;
-    }
-
-    .navigation a:hover {
-        text-decoration: underline;
-    }
-
-    /* Legend Styles */
-
 
     .legend {
-        max-width: 800px;
-        margin: 20px auto;
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-        flex-wrap: wrap;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        font-size: 0.9em;
-        margin-left: 5px;
-        gap: 5px;
-    }
-
-
-
-    .legend-item span {
-        margin-left: 5px;
-
-    }
-
-
-
-    .legend-color {
-        width: 15px;
-        height: 15px;
-        display: inline-block;
-        margin-right: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-
-
-
-
-    .legend-color.holiday {
-        background-color: var(--color-holiday);
-    }
-
-    .legend-color.vacation {
-        background-color: var(--color-vacation);
-    }
-
-    .legend-color.in-office {
-        background-color: var(--color-in-office);
-    }
-
-    .legend-color.remote {
-        background-color: var(--color-remote);
-    }
-
-    .legend-color.weekend {
-        background-color: var(--color-weekend);
-    }
-
-
-
-
-
-    /* Attendance Toggle */
-    .toggle-attendance {
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        display: inline-block;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .toggle-attendance:hover {
-        opacity: 0.8;
-        transform: scale(1.05);
-    }
-
-
-
-
-
-    /* Toggle Legend Styles */
-    .legend-color.toggle-success {
-        background-color: #4CAF50;
-        /* Green */
-    }
-
-    .legend-color.toggle-failure {
-        background-color: #F44336;
-        /* Red */
-    }
-
-
-    /* Optional: Add a border or shadow to differentiate toggle indicators */
-    .legend-color.toggle-success,
-    .legend-color.toggle-failure {
-        border: 1px solid #333;
-        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
-    }
-
-
-
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-
-        .calendar th,
-        .calendar td {
-            height: 80px;
-            padding: 5px;
-            font-size: 14px;
-        }
-    }
-
-    @media (max-width: 480px) {
-
-        .calendar th,
-        .calendar td {
-            height: 60px;
-            padding: 2px;
-            font-size: 12px;
-        }
-    }
-
-
-
-
-
-
-    /* Style for weekends */
-    .weekend {
-        background-color: #f0f0f0;
-        /* Light gray background for weekends */
-        color: #a0a0a0;
-        /* Gray text for weekends */
-    }
-
-    /* Alternatively, for a darker appearance, use a darker background */
-    .weekend {
-        background-color: #d3d3d3;
-        /* Darker gray background */
-        color: #505050;
-        /* Darker gray text */
-    }
-
-    /* Ensure hover effects or other interactions don't override weekend styling */
-    .weekend:hover {
-        background-color: #c0c0c0;
-        /* Slightly darker on hover */
-    }
-
-    .weekend {
-        border: 2px solid #a0a0a0;
-    }
-
-    /* Optional: Make the weekend cells non-interactive if desired */
-    .weekend .toggle-attendance {
-        pointer-events: none;
-        /* Disable clicking on attendance toggles for weekends */
-        opacity: 0.6;
-        /* Slightly faded to indicate non-interactive */
-    }
-
-
-
-    /* Enhance the legend container for better spacing on smaller screens */
-    @media (max-width: 600px) {
-        .legend {
-            flex-direction: column;
-            gap: 10px;
-        }
-    }
-
-
-
-    /* Buttons */
-    button {
-        background-color: var(--color-in-office);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-    }
-
-    button:hover {
-        background-color: darken(var(--color-in-office), 10%);
-        transform: translateY(-2px);
-    }
-
-
-    /* General Form Styles */
-    form {
-        display: flex;
-        flex-direction: column;
         gap: 15px;
     }
 
-    label {
-        font-weight: 500;
-        margin-bottom: 5px;
+    .legend-item {
+        font-size: 0.85em;
     }
 
-    input[type="text"],
-    input[type="date"],
-    select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid var(--color-border);
-        border-radius: 4px;
-        font-size: 1em;
-        transition: border-color 0.3s ease;
+    .progress-bar-container {
+        width: 70%;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar th,
+    .calendar td {
+        height: 60px;
+        padding: 5px;
+        font-size: 12px;
     }
 
-    input[type="text"]:focus,
-    input[type="date"]:focus,
-    select:focus {
-        border-color: var(--color-in-office);
-        outline: none;
+    .attendance-chart {
+        height: 80px;
     }
 
-    button[type="submit"] {
-        align-self: center;
-        background-color: var(--color-in-office);
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
+    .attendance-chart canvas {
+        height: 60px !important;
     }
 
-    button[type="submit"]:hover {
-        background-color: #388E3C;
-        /* Slightly darker green */
-    }
-
-    /* Flexbox for Navigation and Action Buttons */
     .navigation,
     .action-buttons {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        flex-wrap: wrap;
+        flex-direction: column;
     }
 
     .navigation a,
     .action-buttons button {
-        padding: 10px 15px;
-        font-size: 1em;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .navigation a {
-        background-color: var(--color-in-office);
-        color: white;
-    }
-
-    .navigation a:hover {
-        background-color: #388E3C;
-    }
-
-    .action-buttons button {
-        background-color: var(--color-in-office);
-        color: white;
-    }
-
-    .action-buttons button:hover {
-        background-color: #388E3C;
-    }
-
-    /* Adjust Calendar Cell Height on Smaller Screens */
-    @media (max-width: 768px) {
-
-        .calendar th,
-        .calendar td {
-            height: 80px;
-            padding: 8px;
-            font-size: 14px;
-        }
-
-        .legend {
-            gap: 15px;
-        }
-
-        .legend-item {
-            font-size: 0.85em;
-        }
-    }
-
-    @media (max-width: 480px) {
-
-        .calendar th,
-        .calendar td {
-            height: 60px;
-            padding: 5px;
-            font-size: 12px;
-        }
-
-        .legend {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .navigation,
-        .action-buttons {
-            flex-direction: column;
-        }
-
-        .navigation a,
-        .action-buttons button {
-            width: 100%;
-            max-width: 200px;
-        }
-    }
-
-    /* Progress Bar Enhancements */
-    .progress-bar-container {
-        width: 50%;
-        margin: 10px auto;
-    }
-
-    .progress-bar {
         width: 100%;
-        background-color: #e0e0e0;
-        border-radius: 5px;
-        overflow: hidden;
-        /* Ensure the fill doesn't overflow */
+        max-width: 200px;
     }
 
-    .progress-fill {
-        width: 0%;
-        /* Initial width */
-        background-color: #4CAF50;
-        height: 20px;
-        border-radius: 5px 0 0 5px;
-        /* Rounded corners on the left */
-        transition: width 0.5s ease, background-color 0.3s ease;
+    .legend {
+        flex-direction: column;
+        gap: 10px;
     }
 
-    /* Optional: Change color based on status */
-    .progress-fill.in-office {
-        background-color: #4CAF50;
-        /* Green */
+    .legend-item {
+        font-size: 0.8em;
     }
 
-    .progress-fill.remote {
-        background-color: #F44336;
-        /* Red */
+    .progress-bar-container {
+        width: 80%;
     }
+}
+
+/* Buttons */
+button {
+    background-color: var(--color-in-office);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: #388E3C; /* Darker green */
+    transform: translateY(-2px);
+}
+
+/* Toggle Attendance Styles */
+.toggle-attendance {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 0.8em;
+}
+
+.toggle-attendance:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+/* Weekend Styling */
+.weekend {
+    background-color: #d3d3d3; /* Darker gray background */
+    color: #505050; /* Darker gray text */
+    border: 2px solid #a0a0a0;
+}
+
+.weekend:hover {
+    background-color: #c0c0c0; /* Slightly darker on hover */
+}
+
+.weekend .toggle-attendance {
+    pointer-events: none;
+    /* Disable clicking on attendance toggles for weekends */
+    opacity: 0.6;
+    /* Slightly faded to indicate non-interactive */
+}
