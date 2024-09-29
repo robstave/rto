@@ -5,7 +5,7 @@ package handlers
 import (
 	"os"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var logger *slog.Logger

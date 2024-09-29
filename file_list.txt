@@ -1,10 +1,12 @@
 readme.md
+observations.md
 cmd/main/main.go
+handlers/events.go
 handlers/handlers.go
 handlers/home.go
-handlers/events.go
-handlers/utils.go
+handlers/logger.go
 handlers/preferences.go
+handlers/utils.go
 static/css/styles.css
 templates/home.html
 templates/events.html

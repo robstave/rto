@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/robstave/rto/handlers"
+	slogecho "github.com/samber/slog-echo"
 )
 
 // TemplateRenderer is a custom renderer for Echo
@@ -35,9 +36,10 @@ func main() {
 
 	handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
 
-	//lg := handlers.GetLogger()
-	//mw := slogecho.New(lg)
-	//e.Use()
+	// not working
+	lg := handlers.GetLogger()
+	mw := slogecho.New(lg)
+	e.Use(mw)
 
 	funcMap := template.FuncMap{
 		"formatDate": func(t time.Time, layout string) string {
