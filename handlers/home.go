@@ -95,17 +95,9 @@ func Home(c echo.Context) error {
 	}
 
 	// Fetch target days from preferences
-	/*
-		preferencesLock.RLock()
-		targetDaysStr := preferences.TargetDays // Assuming TargetDays is added to Preferences
-		preferencesLock.RUnlock()
-
-		targetDays, err := strconv.ParseFloat(targetDaysStr, 64)
-		if err != nil {
-			// Fallback to default target if parsing fails
-			targetDays = 2.5
-		}
-	*/
+	preferencesLock.RLock()
+	currentPreferences := preferences
+	preferencesLock.RUnlock()
 
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,
@@ -124,6 +116,8 @@ func Home(c echo.Context) error {
 		"TotalDays":     totalDays,
 		"Average":       average,
 		"AverageDays":   averageDays,
+		"Preferences":   currentPreferences, // Add Preferences here
+
 	}
 
 	//log

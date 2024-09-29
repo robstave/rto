@@ -1,5 +1,6 @@
 readme.md
 observations.md
+directives.md
 cmd/main/main.go
 handlers/events.go
 handlers/handlers.go

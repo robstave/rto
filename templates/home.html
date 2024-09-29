@@ -156,17 +156,21 @@
             }
 
             var ctx = document.getElementById('attendanceChart').getContext('2d');
-            var attendanceChart = new Chart(ctx, {
+            var averageDays = parseFloatSafe({{ printf "%.2f" .AverageDays }});
+            var targetDays = parseFloatSafe({{ if .Preferences.TargetDays }}{{ printf "%.2f" .Preferences.TargetDays }}{{ else }}2.5{{ end }});
+        
+
+             var attendanceChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['In Office'],
                     datasets: [{
                         label: 'Days per Week',
-                        data: [{{ printf "%.2f" .AverageDays }}],
-                    backgroundColor: [getBarColor({{ printf "%.2f" .AverageDays }}, {{ printf "%.2f" .Preferences.TargetDays }})],
-        borderColor: [getBarColor({{ printf "%.2f" .AverageDays }}, {{ printf "%.2f" .Preferences.TargetDays }})],
-            borderWidth: 1,
-                maxBarThickness: 50
+                    data: [averageDays],
+                    backgroundColor: [getBarColor(averageDays, targetDays)],
+                    borderColor: [getBarColor(averageDays, targetDays)],
+                    borderWidth: 1,
+                    maxBarThickness: 50
         }]
     },
         options: {
