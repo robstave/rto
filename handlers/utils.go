@@ -18,7 +18,7 @@ func isWeekend(t time.Time) bool {
 }
 
 // calculateInOfficeAverage computes the number of in-office days and total days in the quarter
-func calculateInOfficeAverage(currentYear int, startDate time.Time, endDate time.Time) (int, int) {
+func calculateInOfficeAverage(events []Event, startDate time.Time, endDate time.Time) (int, int) {
 	// Define the quarter date range: October 1 to December 31 of the current year
 
 	// Calculate total days in the quarter
@@ -27,12 +27,8 @@ func calculateInOfficeAverage(currentYear int, startDate time.Time, endDate time
 	// Initialize in-office counter
 	inOfficeCount := 0
 
-	// Lock events for reading
-	eventsLock.RLock()
-	defer eventsLock.RUnlock()
-
 	// Iterate through all events and count in-office days within the quarter
-	for _, event := range allEvents {
+	for _, event := range events {
 		if event.Type == "attendance" && event.IsInOffice {
 			if !event.Date.Before(startDate) && !event.Date.After(endDate) {
 				inOfficeCount++

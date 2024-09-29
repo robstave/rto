@@ -93,7 +93,7 @@ func Home(c echo.Context) error {
 	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
 	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 	// Calculate In-Office Average
-	inOfficeCount, totalDays := calculateInOfficeAverage(currentYear, startDate, endDate)
+	inOfficeCount, totalDays := calculateInOfficeAverage(allEvents, startDate, endDate)
 
 	average := 0.0
 	averageDays := 0.0

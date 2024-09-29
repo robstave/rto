@@ -88,12 +88,9 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up the global allEvents variable
-			eventsLock.Lock()
-			allEvents = tt.events
-			eventsLock.Unlock()
 
 			// Call the function with parameters
-			inOfficeCount, total := calculateInOfficeAverage(currentYear, startDate, endDate)
+			inOfficeCount, total := calculateInOfficeAverage(tt.events, startDate, endDate)
 
 			// Verify the results
 			if inOfficeCount != tt.expectedCount {
