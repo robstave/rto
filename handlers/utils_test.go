@@ -1,3 +1,5 @@
+// handlers/handlers_test.go
+
 package handlers
 
 import (
@@ -12,15 +14,15 @@ func resetGlobals() {
 	allEvents = []Event{}
 }
 
-// TestCalculateInOfficeAverage tests the calculateInOfficeAverage function
+// TestCalculateInOfficeAverage tests the calculateInOfficeAverage function with the updated signature
 func TestCalculateInOfficeAverage(t *testing.T) {
 	resetGlobals()
 
 	// Define the quarter dates for testing
-	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
-	totalDays := int(endDate.Sub(startDate).Hours()/24) + 1
+	currentYear := 2023
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
+	totalDays := int(endDate.Sub(startDate).Hours()/24) + 1 // 92 days
 
 	tests := []struct {
 		name            string
@@ -90,8 +92,8 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 			allEvents = tt.events
 			eventsLock.Unlock()
 
-			// Call the function
-			inOfficeCount, total := calculateInOfficeAverage()
+			// Call the function with parameters
+			inOfficeCount, total := calculateInOfficeAverage(currentYear, startDate, endDate)
 
 			// Verify the results
 			if inOfficeCount != tt.expectedCount {
@@ -116,39 +118,32 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 // TestGetCalendarMonth tests the getCalendarMonth function
 func TestGetCalendarMonth(t *testing.T) {
 	tests := []struct {
-		name          string
-		inputDate     time.Time
-		expectedWeeks [][]CalendarDay
+		name      string
+		inputDate time.Time
 	}{
 		{
-			name:          "First Day on Sunday",
-			inputDate:     time.Date(2023, time.April, 2, 0, 0, 0, 0, time.UTC), // April 2, 2023 is a Sunday
-			expectedWeeks: nil,                                                  // Specific checks below
+			name:      "First Day on Sunday",
+			inputDate: time.Date(2023, time.April, 2, 0, 0, 0, 0, time.UTC), // April 2, 2023 is Sunday
 		},
 		{
-			name:          "First Day on Wednesday",
-			inputDate:     time.Date(2023, time.September, 1, 0, 0, 0, 0, time.UTC), // September 1, 2023 is Friday
-			expectedWeeks: nil,
+			name:      "First Day on Friday",
+			inputDate: time.Date(2023, time.September, 1, 0, 0, 0, 0, time.UTC), // September 1, 2023 is Friday
 		},
 		{
-			name:          "Month with 31 Days",
-			inputDate:     time.Date(2023, time.March, 15, 0, 0, 0, 0, time.UTC), // March 2023 has 31 days
-			expectedWeeks: nil,
+			name:      "Month with 31 Days",
+			inputDate: time.Date(2023, time.March, 15, 0, 0, 0, 0, time.UTC), // March 2023 has 31 days
 		},
 		{
-			name:          "February Non-Leap Year",
-			inputDate:     time.Date(2023, time.February, 10, 0, 0, 0, 0, time.UTC), // February 2023 has 28 days
-			expectedWeeks: nil,
+			name:      "February Non-Leap Year",
+			inputDate: time.Date(2023, time.February, 10, 0, 0, 0, 0, time.UTC), // February 2023 has 28 days
 		},
 		{
-			name:          "February Leap Year",
-			inputDate:     time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC), // February 2024 has 29 days
-			expectedWeeks: nil,
+			name:      "February Leap Year",
+			inputDate: time.Date(2024, time.February, 10, 0, 0, 0, 0, time.UTC), // February 2024 has 29 days
 		},
 		{
-			name:          "Month Starting and Ending on Same Week",
-			inputDate:     time.Date(2021, time.May, 15, 0, 0, 0, 0, time.UTC), // May 2021
-			expectedWeeks: nil,
+			name:      "Month Starting and Ending on Same Week",
+			inputDate: time.Date(2021, time.May, 15, 0, 0, 0, 0, time.UTC), // May 2021
 		},
 	}
 
@@ -179,8 +174,6 @@ func TestGetCalendarMonth(t *testing.T) {
 					}
 				}
 			}
-
-			// Additional specific checks can be added as needed
 		})
 	}
 }
@@ -211,8 +204,6 @@ func TestGetCalendarMonthDetails(t *testing.T) {
 	if len(weeks) != expectedWeeks {
 		t.Errorf("Expected %d weeks for March 2023, got %d", expectedWeeks, len(weeks))
 	}
-
-	// Similarly, you can add checks for other months
 }
 
 // TestSameDay tests the sameDay function

@@ -18,11 +18,8 @@ func isWeekend(t time.Time) bool {
 }
 
 // calculateInOfficeAverage computes the number of in-office days and total days in the quarter
-func calculateInOfficeAverage() (int, int) {
+func calculateInOfficeAverage(currentYear int, startDate time.Time, endDate time.Time) (int, int) {
 	// Define the quarter date range: October 1 to December 31 of the current year
-	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 
 	// Calculate total days in the quarter
 	totalDays := int(endDate.Sub(startDate).Hours()/24) + 1 // +1 to include the end date
