@@ -84,7 +84,6 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 		IsInOffice  bool   `json:"isInOffice"`
 	}
 
-	log.Println("0")
 	if err := json.Unmarshal(byteValue, &rawEvents2); err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 		//parsedDate, err := time.Parse("2006-01-02", e.Date)
 		parsedDate, err := parseDate(e.Date)
 		if err != nil {
-			log.Printf("Invalid ddddate format in events.json %v for event %v: %v", i, e.Description, err)
+			log.Printf("Invalid date format in events.json %v for event %v: %v", i, e.Description, err)
 			continue
 		}
 
@@ -106,7 +105,6 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 			IsInOffice:  e.IsInOffice, // Holidays and vacations override attendance
 			Type:        e.Type,
 		})
-
 	}
 
 	return events, nil
