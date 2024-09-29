@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -26,7 +25,7 @@ func AddEvent(c echo.Context) error {
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		log.Printf("Error parsing date: %v", err)
+		logger.Error("Error parsing date", "date", err)
 		return c.String(http.StatusBadRequest, "Invalid date format")
 	}
 
@@ -60,9 +59,13 @@ type ToggleAttendanceRequest struct {
 
 // ToggleAttendanceResponse represents the JSON response after toggling
 type ToggleAttendanceResponse struct {
-	Success   bool   `json:"success"`
-	NewStatus string `json:"newStatus,omitempty"` // "in" or "remote"
-	Message   string `json:"message,omitempty"`
+	Success       bool    `json:"success"`
+	NewStatus     string  `json:"newStatus,omitempty"` // "in" or "remote"
+	Message       string  `json:"message,omitempty"`
+	InOfficeCount int     `json:"inOfficeCount,omitempty"`
+	TotalDays     int     `json:"totalDays,omitempty"`
+	Average       float64 `json:"average,omitempty"`
+	AverageDays   float64 `json:"averageDays,omitempty"`
 }
 
 // ToggleAttendance handles toggling attendance status for a given date
@@ -70,17 +73,17 @@ func ToggleAttendance(c echo.Context) error {
 
 	req := new(ToggleAttendanceRequest)
 	if err := c.Bind(req); err != nil {
-		log.Printf("Error binding request: %v", err)
+		logger.Error("Error binding request: %v", "error", err)
 		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
 			Success: false,
 			Message: "Invalid request payload.",
 		})
 	}
-	log.Println("togglr yo", req.Date)
+	logger.Info("togglr yo", "date", req.Date)
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", req.Date)
 	if err != nil {
-		log.Printf("Error parsing date: %v", err)
+		logger.Error("Error parsing date", "error", err)
 		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
 			Success: false,
 			Message: "Invalid date format. Expected YYYY-MM-DD.",
@@ -90,15 +93,14 @@ func ToggleAttendance(c echo.Context) error {
 	// Lock events for writing
 	eventsLock.Lock()
 	defer eventsLock.Unlock()
-	log.Println("searching events len:", len(allEvents))
+	logger.Info("searching events", "size", len(allEvents))
 	// Find the attendance event on the given date
 	found := false
 	for i, event := range allEvents {
-		log.Println("x", event.Type, event.Date, eventDate)
 		if sameDay(event.Date, eventDate) && event.Type == "attendance" {
 			// Toggle the IsInOffice flag
 			allEvents[i].IsInOffice = !event.IsInOffice
-			log.Println("found and toggled", allEvents[i].IsInOffice)
+			logger.Info("found and toggled", "value", allEvents[i].IsInOffice)
 			found = true
 			break
 		}
@@ -114,7 +116,7 @@ func ToggleAttendance(c echo.Context) error {
 	// Save to events.json
 	eventsFilePath := "data/events.json" // Ensure this path is correct
 	if err := SaveEvents(eventsFilePath); err != nil {
-		log.Printf("Error saving events: %v", err)
+		logger.Error("Error saving events", "error", err)
 		return c.String(http.StatusInternalServerError, "Failed to save event.")
 	}
 
@@ -129,10 +131,27 @@ func ToggleAttendance(c echo.Context) error {
 		}
 	}
 
-	log.Println("done")
+	// Calculate updated counts and averages
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+
+	inOfficeCount, totalDays := calculateInOfficeAverage(allEvents, startDate, endDate)
+
+	average := 0.0
+	averageDays := 0.0
+	if totalDays > 0 {
+		average = (float64(inOfficeCount) / float64(totalDays)) * 100
+		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 // Average days/week
+	}
+
 	return c.JSON(http.StatusOK, ToggleAttendanceResponse{
-		Success:   true,
-		NewStatus: newStatus,
+		Success:       true,
+		NewStatus:     newStatus,
+		InOfficeCount: inOfficeCount,
+		TotalDays:     totalDays,
+		Average:       average,
+		AverageDays:   averageDays,
 	})
 }
 
@@ -165,7 +184,7 @@ func EventsList(c echo.Context) error {
 
 // AddDefaultDays handles the addition of default attendance events
 func AddDefaultDays(c echo.Context) error {
-	log.Println("AddDefaultDays triggered")
+	logger.Info("AddDefaultDays triggered")
 
 	// Define the date range: October 1 to December 31 of the current year
 	currentYear := time.Now().Year()
@@ -250,14 +269,14 @@ func AddDefaultDays(c echo.Context) error {
 		}
 	}
 
-	log.Printf("AddDefaultDays: Added %d new attendance events.", addedCount)
+	logger.Info("AddDefaultDays: added events.", "count", addedCount)
 
 	// Optionally, you can save `allEvents` to `events.json` here if persistence is desired
 
 	// Save the updated events to events.json
 	eventsFilePath := "data/events.json" // Ensure this path is correct
 	if err := SaveEvents(eventsFilePath); err != nil {
-		log.Printf("Error saving events: %v", err)
+		logger.Error("Error saving events", "error", err)
 		return c.String(http.StatusInternalServerError, "Failed to save default attendance events.")
 	}
 
@@ -269,7 +288,7 @@ func AddDefaultDays(c echo.Context) error {
 
 // SaveEvents saves the current list of events to the specified JSON file.
 func SaveEvents(filePath string) error {
-	log.Println("saving")
+
 	//eventsLock.RLock()
 	//defer eventsLock.RUnlock()
 
@@ -282,8 +301,6 @@ func SaveEvents(filePath string) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("done saving")
 
 	return nil
 }

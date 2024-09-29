@@ -2,20 +2,23 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Return to Office Helper</title>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"   crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Include jQuery for simplicity (optional: use vanilla JS or another library) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 </head>
+
 <body>
     <h1 style="text-align: center;">Return to Office Calendar</h1>
 
@@ -24,29 +27,32 @@
         <span style="font-size: 1.2em; font-weight: bold;">{{.CurrentDate.Format "January 2006"}}</span>
         <br>
         <!-- Previous Month -->
-        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous Month</a>
+        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous
+            Month</a>
 
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
     </div>
 
     <!-- Display In-Office Average -->
+    <!-- Display In-Office Average -->
     <div class="attendance-average" style="text-align: center; margin-bottom: 20px;">
-        <h3>In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
-        <p>In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}}</p>
+        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
+            Week</h3>
+        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}}</p>
 
         <!-- Optional: Progress Bar -->
         <div class="progress-bar-container" style="width: 50%; margin: 10px auto;">
             <div class="progress-bar" style="width: 100%; background-color: #e0e0e0; border-radius: 5px;">
-                <div class="progress-fill" style="
-                    width: {{.Average}}%;
-                    background-color: #4CAF50;
-                    height: 20px;
-                    border-radius: 5px;
-                    transition: width 0.5s ease;
-                "></div>
+                <div id="progress-fill" class="progress-fill" style="
+                width: {{.Average}}%;
+                background-color: #4CAF50;
+                height: 20px;
+                border-radius: 5px;
+                transition: width 0.5s ease;
+            "></div>
             </div>
-            <p style="margin-top: 5px;">{{printf "%.2f" .Average}}% In Office</p>
+            <p id="progress-percent" style="margin-top: 5px;">{{printf "%.2f" .Average}}% In Office</p>
         </div>
     </div>
 
@@ -59,7 +65,8 @@
 
     <!-- Action Buttons -->
     <div class="action-buttons" style="text-align: center; margin: 20px 0;">
-        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add Event</button>
+        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add
+            Event</button>
         <button onclick="window.location.href='/events'" style="padding: 10px 20px;">Events</button>
         <button onclick="window.location.href='/prefs'" style="padding: 10px 20px;">Prefs</button>
     </div>
@@ -103,21 +110,22 @@
                 {{if .IsWeekend}}weekend{{end}}">
                 <div>{{.Date.Day}}</div>
                 {{if .Events}}
-                    <div class="events">
-                        {{range .Events}}
-                            {{if eq .Type "holiday"}}
-                                <span class="event-holiday"><i class="fa-solid fa-umbrella-beach"></i>{{.Description}}</span>
-                            {{else if eq .Type "vacation"}}
-                                <span class="event-vacation"><i class="fa-solid fa-plane"></i>{{.Description}}</span>
-                            {{else if eq .Type "attendance"}}
-                            <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}" 
-                            data-date="{{.Date.Format "2006-01-02"}}" 
-                            data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
-                          {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i class="fa-solid fa-home"></i> Remote{{end}}
-                      </span>
-                            {{end}}
-                        {{end}}
-                    </div>
+                <div class="events">
+                    {{range .Events}}
+                    {{if eq .Type "holiday"}}
+                    <span class="event-holiday"><i class="fa-solid fa-umbrella-beach"></i>{{.Description}}</span>
+                    {{else if eq .Type "vacation"}}
+                    <span class="event-vacation"><i class="fa-solid fa-plane"></i>{{.Description}}</span>
+                    {{else if eq .Type "attendance"}}
+                    <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}"
+                        data-date="{{.Date.Format "2006-01-02"}}"
+                        data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
+                        {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i
+                            class="fa-solid fa-home"></i> Remote{{end}}
+                    </span>
+                    {{end}}
+                    {{end}}
+                </div>
                 {{end}}
             </td>
             {{end}}
@@ -137,9 +145,9 @@
 
     <!-- JavaScript for Toggling Attendance -->
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Handle click on attendance toggle
-            $('.toggle-attendance').on('click', function() {
+            $('.toggle-attendance').on('click', function () {
                 var span = $(this);
                 var date = span.data('date');
                 var currentStatus = span.data('status'); // 'in' or 'remote'
@@ -151,7 +159,7 @@
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({ date: date }),
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
                             console.log("Success:", response)
                             // Update the span's class and text
@@ -164,6 +172,14 @@
                                 span.html('<i class="fa-solid fa-home"></i> Remote');
                                 span.data('status', 'remote');
                             }
+
+                                     // Update counts and averages
+                        $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + response.averageDays.toFixed(2) + ' Days per Week');
+                        $('#counts').text('In-Office Days: ' + response.inOfficeCount + ' / Total Days: ' + response.totalDays);
+                        $('#progress-fill').css('width', response.average + '%');
+                        $('#progress-fill').css('background-color', '#4CAF50'); // Optional: Change color based on status
+                        $('#progress-percent').text(response.average.toFixed(2) + '% In Office');
+
                             // Optionally, show a success message using Toastr
                             toastr.success('Attendance status updated successfully.');
                         } else {
@@ -171,7 +187,7 @@
                             toastr.error('Failed to update attendance status: ' + response.message);
                         }
                     },
-                    error: function() {
+                    error: function () {
                         toastr.error('An error occurred while updating attendance status.');
                     }
                 });
@@ -179,4 +195,5 @@
         });
     </script>
 </body>
+
 </html>

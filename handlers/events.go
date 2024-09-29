@@ -11,12 +11,10 @@ import (
 
 // Event represents a calendar event
 type Event struct {
-	Date time.Time `json:"date"`
-	//Date string `json:"date"`
-
-	Description string `json:"description"`
-	IsInOffice  bool   `json:"isInOffice"`
-	Type        string `json:"type"` // "attendance", "holiday", "vacation"
+	Date        time.Time `json:"date"`
+	Description string    `json:"description"`
+	IsInOffice  bool      `json:"isInOffice"`
+	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
 }
 
 // InitializeEvents loads holidays and attendance events without duplicates
@@ -42,7 +40,6 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 	if err != nil {
 		logger.Error("Error loading attendance events:",
 			"error", err)
-
 		attendanceEvents = []Event{}
 	}
 
@@ -57,7 +54,6 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 				"date", a.Date.Format("2006-01-02"),
 				"type", a.Type,
 			)
-
 		}
 	}
 
@@ -83,7 +79,6 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 		return nil, err
 	}
 
-	//var rawEvents2 []Event
 	var rawEvents2 []struct {
 		Date        string `json:"date"`
 		Description string `json:"description"`
