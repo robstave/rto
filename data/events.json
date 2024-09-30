@@ -1,72 +1,12 @@
 [
     {
-        "date": "2024-10-24T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-26T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-21T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-21T00:00:00-06:00",
+        "date": "2024-11-01T00:00:00-05:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
     },
     {
-        "date": "2024-12-13T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-07T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-18T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-27T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-28T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-03T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-16T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-12T00:00:00-06:00",
+        "date": "2024-10-11T00:00:00-05:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
@@ -78,10 +18,22 @@
         "type": "attendance"
     },
     {
-        "date": "2024-12-25T00:00:00Z",
-        "description": "Christmas Day",
+        "date": "2024-10-09T00:00:00-05:00",
+        "description": "",
         "isInOffice": false,
-        "type": "holiday"
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-02T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-02T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
     },
     {
         "date": "2024-10-04T00:00:00-05:00",
@@ -90,15 +42,135 @@
         "type": "attendance"
     },
     {
-        "date": "2024-10-18T00:00:00-05:00",
+        "date": "2024-12-18T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-16T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-21T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-31T00:00:00-05:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
     },
     {
-        "date": "2024-10-09T00:00:00-05:00",
+        "date": "2024-10-22T00:00:00-05:00",
         "description": "",
         "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-07T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-24T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-15T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-03T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-28T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-07T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-08T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-11T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-27T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-06T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-06T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-23T00:00:00Z",
+        "description": "Thanksgiving Day",
+        "isInOffice": false,
+        "type": "holiday"
+    },
+    {
+        "date": "2024-12-12T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-23T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-08T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-13T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-29T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
         "type": "attendance"
     },
     {
@@ -108,13 +180,97 @@
         "type": "attendance"
     },
     {
-        "date": "2024-11-25T00:00:00-06:00",
+        "date": "2024-10-30T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-14T00:00:00-05:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
     },
     {
         "date": "2024-10-17T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-05T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-31T00:00:00Z",
+        "description": "New Year's Eve",
+        "isInOffice": false,
+        "type": "vacation"
+    },
+    {
+        "date": "2024-12-30T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-10T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-23T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-05T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-22T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-18T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-27T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-28T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-12T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-21T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-17T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
@@ -132,109 +288,7 @@
         "type": "attendance"
     },
     {
-        "date": "2024-10-01T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-22T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
         "date": "2024-11-19T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-01T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-04T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-27T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-07T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-02T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-14T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-05T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-04T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-31T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-26T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-29T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-30T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-06T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-13T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-12T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
@@ -246,28 +300,58 @@
         "type": "attendance"
     },
     {
-        "date": "2024-10-22T00:00:00-05:00",
+        "date": "2024-11-25T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
     },
     {
-        "date": "2024-10-23T00:00:00-05:00",
+        "date": "2024-12-26T00:00:00-06:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
     },
     {
-        "date": "2024-11-08T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-23T00:00:00-06:00",
+        "date": "2024-11-18T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
+    },
+    {
+        "date": "2024-12-19T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-11-04T00:00:00-06:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-04T00:00:00-06:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-24T00:00:00-05:00",
+        "description": "",
+        "isInOffice": true,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-10-01T00:00:00-05:00",
+        "description": "",
+        "isInOffice": false,
+        "type": "attendance"
+    },
+    {
+        "date": "2024-12-25T00:00:00Z",
+        "description": "Christmas Day",
+        "isInOffice": false,
+        "type": "holiday"
     },
     {
         "date": "2024-10-10T00:00:00-05:00",
@@ -276,31 +360,13 @@
         "type": "attendance"
     },
     {
-        "date": "2024-11-05T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-02T00:00:00-05:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-30T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-08T00:00:00-05:00",
+        "date": "2024-11-26T00:00:00-06:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
     },
     {
-        "date": "2024-12-09T00:00:00-06:00",
+        "date": "2024-10-03T00:00:00-05:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
@@ -312,19 +378,19 @@
         "type": "attendance"
     },
     {
-        "date": "2024-12-03T00:00:00-06:00",
+        "date": "2024-12-09T00:00:00-06:00",
         "description": "",
         "isInOffice": true,
         "type": "attendance"
     },
     {
-        "date": "2024-12-19T00:00:00-06:00",
+        "date": "2024-12-13T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
     },
     {
-        "date": "2024-12-24T00:00:00-06:00",
+        "date": "2024-11-29T00:00:00-06:00",
         "description": "",
         "isInOffice": false,
         "type": "attendance"
@@ -336,69 +402,9 @@
         "type": "attendance"
     },
     {
-        "date": "2024-11-28T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-15T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-11T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-10-11T00:00:00-05:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-31T00:00:00Z",
-        "description": "New Year's Eve",
+        "date": "2024-10-03T00:00:00Z",
+        "description": "state fair",
         "isInOffice": false,
         "type": "vacation"
-    },
-    {
-        "date": "2024-12-18T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-17T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-11-23T00:00:00Z",
-        "description": "Thanksgiving Day",
-        "isInOffice": false,
-        "type": "holiday"
-    },
-    {
-        "date": "2024-11-29T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-06T00:00:00-06:00",
-        "description": "",
-        "isInOffice": false,
-        "type": "attendance"
-    },
-    {
-        "date": "2024-12-10T00:00:00-06:00",
-        "description": "",
-        "isInOffice": true,
-        "type": "attendance"
     }
 ]

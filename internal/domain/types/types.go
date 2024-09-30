@@ -21,3 +21,17 @@ type CalendarDay struct {
 	IsWeekend bool // New field to indicate weekends
 
 }
+
+type Preferences struct {
+	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
+	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
+
+}
+
+type AttendanceStats struct {
+	InOfficeCount int
+	TotalDays     int
+	Average       float64
+	AverageDays   float64
+	TargetDays    float64
+}

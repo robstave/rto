@@ -1,4 +1,4 @@
 {
-    "defaultDays": "M,T,W,Th",
-    "target": 2.5
+    "defaultDays": "M,T",
+    "targetDays": "2.5"
 }

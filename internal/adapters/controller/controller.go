@@ -1,24 +1,25 @@
 package controller
 
 import (
+	"log/slog"
+
 	"github.com/robstave/rto/internal/domain"
 )
 
 type RTOController struct {
 	service domain.RTOBLL
-	test2   string
+
+	logger *slog.Logger
 }
 
 func NewRTOController(
-
-	test2 string,
+	logger *slog.Logger,
 
 ) *RTOController {
 
 	service := domain.NewService(
-		2.5,
-		"gg",
+		logger,
 	)
 
-	return &RTOController{service, test2}
+	return &RTOController{service, logger}
 }

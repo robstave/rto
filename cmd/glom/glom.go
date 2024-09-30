@@ -32,7 +32,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		filePath := scanner.Text()
-
+		log.Printf(filePath)
 		// Read the contents of each file
 		data, err := ioutil.ReadFile(filepath.Clean(filePath))
 		if err != nil {

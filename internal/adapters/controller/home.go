@@ -1,10 +1,10 @@
-package handlers
+package controller
 
 import (
 	"log"
 	"net/http"
 	"strconv"
-	"sync"
+
 	"time"
 
 	"github.com/robstave/rto/internal/domain/types"
@@ -13,15 +13,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Global variable to store all events and manage thread safety
-var (
-	allEvents  []types.Event
-	eventsLock sync.RWMutex
-)
-
 // Home renders the calendar on the home page
-func Home(c echo.Context) error {
+func (ctlr *RTOController) Home(c echo.Context) error {
 
+	allEvents := ctlr.service.GetAllEvents()
 	// Get current date or date from query parameters
 	currentDate := time.Now()
 	yearParam := c.QueryParam("year")
@@ -87,9 +82,8 @@ func Home(c echo.Context) error {
 	}
 
 	// Fetch target days from preferences
-	preferencesLock.RLock()
-	currentPreferences := preferences
-	preferencesLock.RUnlock()
+
+	currentPreferences := ctlr.service.GetPrefs()
 
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,
@@ -126,7 +120,7 @@ func Home(c echo.Context) error {
 
 	// Render the template
 	if err := c.Render(http.StatusOK, "home.html", data); err != nil {
-		logger.Error("Template rendering error:", "error", err)
+		ctlr.logger.Error("Template rendering error:", "error", err)
 
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
