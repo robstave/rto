@@ -1,22 +1,23 @@
-// handlers/handlers_test.go
-
-package handlers
+package utils
 
 import (
 	"testing"
 	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
 )
 
 // Helper function to reset global variables before each test
+/*
 func resetGlobals() {
 	eventsLock.Lock()
 	defer eventsLock.Unlock()
-	allEvents = []Event{}
+	allEvents = []types.Event{}
 }
+*/
 
 // TestCalculateInOfficeAverage tests the calculateInOfficeAverage function with the updated signature
 func TestCalculateInOfficeAverage(t *testing.T) {
-	resetGlobals()
 
 	// Define the quarter dates for testing
 	currentYear := 2023
@@ -26,21 +27,21 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		events          []Event
+		events          []types.Event
 		expectedCount   int
 		expectedTotal   int
 		expectedAverage float64
 	}{
 		{
 			name:            "No Events",
-			events:          []Event{},
+			events:          []types.Event{},
 			expectedCount:   0,
 			expectedTotal:   totalDays,
 			expectedAverage: 0.0,
 		},
 		{
 			name: "In-Office Events Within Quarter",
-			events: []Event{
+			events: []types.Event{
 				{Date: startDate, Type: "attendance", IsInOffice: true},
 				{Date: startDate.AddDate(0, 0, 1), Type: "attendance", IsInOffice: true},
 				{Date: endDate, Type: "attendance", IsInOffice: true},
@@ -51,7 +52,7 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 		},
 		{
 			name: "In-Office Events Outside Quarter",
-			events: []Event{
+			events: []types.Event{
 				{Date: startDate.AddDate(0, -1, 0), Type: "attendance", IsInOffice: true}, // September
 				{Date: endDate.AddDate(0, 1, 0), Type: "attendance", IsInOffice: true},    // January
 			},
@@ -61,7 +62,7 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 		},
 		{
 			name: "Mixed Event Types",
-			events: []Event{
+			events: []types.Event{
 				{Date: startDate, Type: "holiday", IsInOffice: false},
 				{Date: startDate.AddDate(0, 0, 2), Type: "vacation", IsInOffice: false},
 				{Date: startDate.AddDate(0, 0, 3), Type: "attendance", IsInOffice: true},
@@ -74,7 +75,7 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 		},
 		{
 			name: "Multiple In-Office Events on Same Day",
-			events: []Event{
+			events: []types.Event{
 				{Date: startDate, Type: "attendance", IsInOffice: true},
 				{Date: startDate, Type: "attendance", IsInOffice: true}, // Duplicate on same day
 				{Date: startDate.AddDate(0, 0, 1), Type: "attendance", IsInOffice: true},
@@ -90,7 +91,7 @@ func TestCalculateInOfficeAverage(t *testing.T) {
 			// Set up the global allEvents variable
 
 			// Call the function with parameters
-			inOfficeCount, total := calculateInOfficeAverage(tt.events, startDate, endDate)
+			inOfficeCount, total := CalculateInOfficeAverage(tt.events, startDate, endDate)
 
 			// Verify the results
 			if inOfficeCount != tt.expectedCount {
@@ -146,7 +147,7 @@ func TestGetCalendarMonth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			weeks := getCalendarMonth(tt.inputDate)
+			weeks := GetCalendarMonth(tt.inputDate)
 
 			// Basic validations
 			if len(weeks) < 4 || len(weeks) > 6 {
@@ -179,20 +180,20 @@ func TestGetCalendarMonth(t *testing.T) {
 func TestGetCalendarMonthDetails(t *testing.T) {
 	// Example: Test March 2023
 	inputDate := time.Date(2023, time.March, 15, 0, 0, 0, 0, time.UTC)
-	weeks := getCalendarMonth(inputDate)
+	weeks := GetCalendarMonth(inputDate)
 
 	// March 1, 2023 is a Wednesday
 	// The first week should start on Sunday, February 26, 2023
 	firstWeek := weeks[0]
 	expectedFirstDate := time.Date(2023, time.February, 26, 0, 0, 0, 0, time.UTC)
-	if !sameDay(firstWeek[0].Date, expectedFirstDate) {
+	if !SameDay(firstWeek[0].Date, expectedFirstDate) {
 		t.Errorf("First day of first week: expected %v, got %v", expectedFirstDate, firstWeek[0].Date)
 	}
 
 	// The last week should include April 1, 2023 (Saturday)
 	lastWeek := weeks[len(weeks)-1]
 	expectedLastDate := time.Date(2023, time.April, 1, 0, 0, 0, 0, time.UTC)
-	if !sameDay(lastWeek[6].Date, expectedLastDate) {
+	if !SameDay(lastWeek[6].Date, expectedLastDate) {
 		t.Errorf("Last day of last week: expected %v, got %v", expectedLastDate, lastWeek[6].Date)
 	}
 
@@ -263,7 +264,7 @@ func TestSameDay(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sameDay(tt.dateA, tt.dateB)
+			result := SameDay(tt.dateA, tt.dateB)
 			if result != tt.expected {
 				t.Errorf("sameDay(%v, %v) = %v; want %v", tt.dateA, tt.dateB, result, tt.expected)
 			}

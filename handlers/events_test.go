@@ -6,6 +6,9 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
 )
 
 // TestLoadAttendanceEvents is a unit test for LoadAttendanceEvents function.
@@ -90,7 +93,7 @@ func TestLoadHolidays(t *testing.T) {
 	testCases := []struct {
 		name           string
 		jsonContent    string
-		expectedEvents []Event
+		expectedEvents []types.Event
 		expectError    bool
 	}{
 		{
@@ -112,7 +115,7 @@ func TestLoadHolidays(t *testing.T) {
                     "type": "vacation"
                 }
             ]`,
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2024, 10, 31, 0, 0, 0, 0, time.UTC),
 					Description: "Halloween",
@@ -137,7 +140,7 @@ func TestLoadHolidays(t *testing.T) {
 		{
 			name:           "Empty JSON Array",
 			jsonContent:    `[]`,
-			expectedEvents: []Event{},
+			expectedEvents: []types.Event{},
 			expectError:    false,
 		},
 		{
@@ -158,7 +161,7 @@ func TestLoadHolidays(t *testing.T) {
                     "type": "holiday"
                 }
             ]`,
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2024, 10, 31, 0, 0, 0, 0, time.UTC),
 					Description: "", // Name is missing
@@ -182,7 +185,7 @@ func TestLoadHolidays(t *testing.T) {
                     "type": "holiday"
                 }
             ]`,
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2024, 11, 25, 0, 0, 0, 0, time.UTC),
 					Description: "Thanksgiving",
@@ -239,7 +242,7 @@ func TestProcessRawHolidays(t *testing.T) {
 	tests := []struct {
 		name           string
 		rawEvents      []RawHoliday
-		expectedEvents []Event
+		expectedEvents []types.Event
 		expectedErrors int
 	}{
 		{
@@ -248,7 +251,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
 				{Date: "2023-11-23", Name: "Thanksgiving", Type: "holiday"},
 			},
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
 					Description: "Christmas Day",
@@ -272,7 +275,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "2023-11-23", Name: "Thanksgiving", Type: "holiday"},
 				{Date: "2023-02-30", Name: "Impossible Date", Type: "holiday"}, // Invalid date
 			},
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
 					Description: "Christmas Day",
@@ -294,7 +297,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "invalid-date-1", Name: "Invalid Holiday 1", Type: "holiday"},
 				{Date: "invalid-date-2", Name: "Invalid Holiday 2", Type: "holiday"},
 			},
-			expectedEvents: []Event{},
+			expectedEvents: []types.Event{},
 			expectedErrors: 2,
 		},
 		{
@@ -306,7 +309,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "2023-02-30", Name: "Invalid Date", Type: "holiday"}, // Invalid
 				{Date: "invalid-date", Name: "Another Invalid", Type: "holiday"},
 			},
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
 					Description: "Christmas Day",
@@ -331,7 +334,7 @@ func TestProcessRawHolidays(t *testing.T) {
 		{
 			name:           "Empty RawEvents",
 			rawEvents:      []RawHoliday{},
-			expectedEvents: []Event{},
+			expectedEvents: []types.Event{},
 			expectedErrors: 0,
 		},
 		{
@@ -340,7 +343,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "2023-12-25", Name: "Christmas Day", Type: "holiday"},
 				{Date: "2023-12-25", Name: "Duplicate Christmas", Type: "holiday"},
 			},
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2023, time.December, 25, 0, 0, 0, 0, time.UTC),
 					Description: "Christmas Day",
@@ -363,7 +366,7 @@ func TestProcessRawHolidays(t *testing.T) {
 				{Date: "2023-12-26", Name: "Boxing Day", Type: "holiday"},
 				{Date: "2023-08-15", Name: "Assumption Day", Type: "holiday"},
 			},
-			expectedEvents: []Event{
+			expectedEvents: []types.Event{
 				{
 					Date:        time.Date(2023, time.July, 4, 0, 0, 0, 0, time.UTC),
 					Description: "Independence Day",
@@ -402,7 +405,7 @@ func TestProcessRawHolidays(t *testing.T) {
 					break
 				}
 				actualEvent := events[i]
-				if !sameDay(actualEvent.Date, expectedEvent.Date) {
+				if !utils.SameDay(actualEvent.Date, expectedEvent.Date) {
 					t.Errorf("Event %d: expected date %v, got %v", i, expectedEvent.Date, actualEvent.Date)
 				}
 				if actualEvent.Description != expectedEvent.Description {

@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/robstave/rto/handlers"
+	api "github.com/robstave/rto/internal"
+
 	slogecho "github.com/samber/slog-echo"
 )
 
@@ -23,6 +24,52 @@ type TemplateRenderer struct {
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	return t.templates.ExecuteTemplate(w, name, data)
 }
+
+func main() {
+
+	e := api.GetEcho()
+
+	handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
+
+	// not working
+	lg := handlers.GetLogger()
+	mw := slogecho.New(lg)
+	e.Use(mw)
+
+	funcMap := template.FuncMap{
+		"formatDate": func(t time.Time, layout string) string {
+			return t.Format(layout)
+		},
+	}
+
+	// Parse the templates with custom functions
+	renderer := &TemplateRenderer{
+		templates: template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/*.html")),
+	}
+	e.Renderer = renderer
+
+	log.Println("templates loaded")
+
+	// Initialize events
+	log.Println("init events")
+	holidaysPath := filepath.Join("data", "holidays.json")
+	eventsPath := filepath.Join("data", "events.json")
+	handlers.InitializeEvents(holidaysPath, eventsPath)
+	// Initialize preferences
+	preferencesPath := filepath.Join("data", "preferences.json")
+	handlers.InitializePreferences(preferencesPath)
+
+	log.Println("starting")
+	// Start the server on port 8761
+	if err := e.Start(":8761"); err != nil && err != http.ErrServerClosed {
+		log.Fatal("shutting down the server")
+	}
+
+}
+
+/*
+
+
 
 func main() {
 	e := echo.New()
@@ -90,3 +137,6 @@ func main() {
 	}
 
 }
+
+
+*/

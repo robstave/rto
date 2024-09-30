@@ -2,32 +2,25 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 
 	"os"
-	"time"
-)
 
-// Event represents a calendar event
-type Event struct {
-	Date        time.Time `json:"date"`
-	Description string    `json:"description"`
-	IsInOffice  bool      `json:"isInOffice"`
-	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
-}
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+)
 
 // InitializeEvents loads holidays and attendance events without duplicates
 func InitializeEvents(holidaysPath string, eventsPath string) {
 	holidays, err := LoadHolidays(holidaysPath)
 	if err != nil {
 		logger.Error("Error loading holidays", "error", err)
-		allEvents = []Event{}
+		allEvents = []types.Event{}
 		return
 	}
 
 	// Initialize a map to track unique events
-	eventMap := make(map[string]Event)
+	eventMap := make(map[string]types.Event)
 
 	// Add holidays to the map
 	for _, h := range holidays {
@@ -40,7 +33,7 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 	if err != nil {
 		logger.Error("Error loading attendance events:",
 			"error", err)
-		attendanceEvents = []Event{}
+		attendanceEvents = []types.Event{}
 	}
 
 	// Add attendance events to the map, avoiding duplicates
@@ -58,7 +51,7 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 	}
 
 	// Convert the map back to a slice
-	allEvents = []Event{}
+	allEvents = []types.Event{}
 	for _, e := range eventMap {
 		allEvents = append(allEvents, e)
 	}
@@ -67,7 +60,7 @@ func InitializeEvents(holidaysPath string, eventsPath string) {
 }
 
 // LoadAttendanceEvents loads attendance events from a JSON file
-func LoadAttendanceEvents(filePath string) ([]Event, error) {
+func LoadAttendanceEvents(filePath string) ([]types.Event, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -90,10 +83,10 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 		return nil, err
 	}
 	// Ensure date parsing
-	var events []Event
+	var events []types.Event
 	for _, e := range rawEvents2 {
 
-		parsedDate, err := parseDate(e.Date)
+		parsedDate, err := utils.ParseDate(e.Date)
 		if err != nil {
 			logger.Error(
 				"Invalid date format in events.json",
@@ -102,7 +95,7 @@ func LoadAttendanceEvents(filePath string) ([]Event, error) {
 			continue
 		}
 
-		events = append(events, Event{
+		events = append(events, types.Event{
 			Date:        parsedDate,
 			Description: e.Description,
 			IsInOffice:  e.IsInOffice, // Holidays and vacations override attendance
@@ -121,7 +114,7 @@ type RawHoliday struct {
 }
 
 // LoadHolidays loads holidays and vacations from a JSON file
-func LoadHolidays(filePath string) ([]Event, error) {
+func LoadHolidays(filePath string) ([]types.Event, error) {
 
 	logger.Info("loading Holidays")
 	file, err := os.Open(filePath)
@@ -152,18 +145,18 @@ func LoadHolidays(filePath string) ([]Event, error) {
 
 // processRawHolidays converts raw holiday data into Event structs.
 // It returns a slice of Events and a slice of errors encountered during processing.
-func processRawHolidays(rawEvents []RawHoliday) ([]Event, []error) {
-	events := []Event{}
+func processRawHolidays(rawEvents []RawHoliday) ([]types.Event, []error) {
+	events := []types.Event{}
 	errorsList := []error{}
 
 	for _, re := range rawEvents {
-		parsedDate, err := parseDate(re.Date)
+		parsedDate, err := utils.ParseDate(re.Date)
 		if err != nil {
 			logger.Error("Invalid date format in holidays.json", "error", err)
 			errorsList = append(errorsList, err)
 			continue
 		}
-		events = append(events, Event{
+		events = append(events, types.Event{
 			Date:        parsedDate,
 			Description: re.Name,
 			IsInOffice:  false, // Holidays and vacations override attendance
@@ -172,22 +165,4 @@ func processRawHolidays(rawEvents []RawHoliday) ([]Event, []error) {
 	}
 
 	return events, errorsList
-}
-
-// parseDate tries to parse a date string using multiple layouts.
-// It returns the parsed time.Time or an error if none of the layouts match.
-func parseDate(dateStr string) (time.Time, error) {
-	layouts := []string{
-		"2006-01-02",          // "YYYY-MM-DD"
-		time.RFC3339,          // "YYYY-MM-DDTHH:MM:SSZ"
-		"2006-01-02T15:04:05", // "YYYY-MM-DDTHH:MM:SS"
-	}
-
-	for _, layout := range layouts {
-		if t, err := time.Parse(layout, dateStr); err == nil {
-			return t, nil
-		}
-	}
-
-	return time.Time{}, errors.New("invalid date format")
 }

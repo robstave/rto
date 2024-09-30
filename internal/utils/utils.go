@@ -1,18 +1,39 @@
-package handlers
+package utils
 
 import (
+	"errors"
 	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
 )
 
-// sameDay checks if two dates are on the same calendar day
-func sameDay(a, b time.Time) bool {
+// parseDate tries to parse a date string using multiple layouts.
+// It returns the parsed time.Time or an error if none of the layouts match.
+func ParseDate(dateStr string) (time.Time, error) {
+	layouts := []string{
+		"2006-01-02",          // "YYYY-MM-DD"
+		time.RFC3339,          // "YYYY-MM-DDTHH:MM:SSZ"
+		"2006-01-02T15:04:05", // "YYYY-MM-DDTHH:MM:SS"
+	}
+
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, dateStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, errors.New("invalid date format")
+}
+
+// SameDay checks if two dates are on the same calendar day
+func SameDay(a, b time.Time) bool {
 	yearA, monthA, dayA := a.Date()
 	yearB, monthB, dayB := b.Date()
 	return yearA == yearB && monthA == monthB && dayA == dayB
 }
 
-// calculateInOfficeAverage computes the number of in-office days and total days in the quarter
-func calculateInOfficeAverage(events []Event, startDate time.Time, endDate time.Time) (int, int) {
+// CalculateInOfficeAverage computes the number of in-office days and total days in the quarter
+func CalculateInOfficeAverage(events []types.Event, startDate time.Time, endDate time.Time) (int, int) {
 	// Define the quarter date range: October 1 to December 31 of the current year
 
 	// Calculate total days in the quarter
@@ -32,9 +53,9 @@ func calculateInOfficeAverage(events []Event, startDate time.Time, endDate time.
 	return inOfficeCount, totalDays
 }
 
-// getCalendarMonth generates all weeks for the given month, including days from adjacent months
-func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
-	var weeks [][]CalendarDay
+// GetCalendarMonth generates all weeks for the given month, including days from adjacent months
+func GetCalendarMonth(currentDate time.Time) [][]types.CalendarDay {
+	var weeks [][]types.CalendarDay
 
 	// Normalize to the first day of the month
 	firstOfMonth := time.Date(currentDate.Year(), currentDate.Month(), 1, 0, 0, 0, 0, currentDate.Location())
@@ -45,11 +66,11 @@ func getCalendarMonth(currentDate time.Time) [][]CalendarDay {
 	startDate := firstOfMonth.AddDate(0, 0, -daysToSubtract)
 
 	for week := 0; week < 6; week++ { // Up to 6 weeks in a month view
-		var weekDays []CalendarDay
+		var weekDays []types.CalendarDay
 		for day := 0; day < 7; day++ {
 			currentDay := startDate.AddDate(0, 0, week*7+day)
 			inMonth := currentDay.Month() == firstOfMonth.Month()
-			weekDays = append(weekDays, CalendarDay{
+			weekDays = append(weekDays, types.CalendarDay{
 				Date:    currentDay,
 				InMonth: inMonth,
 			})

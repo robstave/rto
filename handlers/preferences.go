@@ -5,18 +5,13 @@ import (
 	"io/ioutil"
 	"os"
 	"sync"
+
+	"github.com/robstave/rto/internal/domain/types"
 )
-
-// Preferences represents user preferences
-type Preferences struct {
-	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
-	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
-
-}
 
 // Global variables to store preferences and manage thread safety
 var (
-	preferences     Preferences
+	preferences     types.Preferences
 	preferencesLock sync.RWMutex
 )
 
@@ -28,7 +23,7 @@ func InitializePreferences(filePath string) {
 
 		// Set default preferences if loading fails
 		preferencesLock.Lock()
-		preferences = Preferences{
+		preferences = types.Preferences{
 			DefaultDays: "T,W,Th,F", // Default to Tuesday, Wednesday, Thursday, Friday
 		}
 		preferencesLock.Unlock()
@@ -51,7 +46,7 @@ func LoadPreferences(filePath string) error {
 		return err
 	}
 
-	var prefs Preferences
+	var prefs types.Preferences
 	if err := json.Unmarshal(byteValue, &prefs); err != nil {
 		return err
 	}

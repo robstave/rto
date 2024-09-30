@@ -4,26 +4,18 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
-	"sync"
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )
 
-// CalendarDay represents a single day in the calendar
-type CalendarDay struct {
-	Date      time.Time
-	InMonth   bool
-	Today     bool
-	Events    []Event
-	IsWeekend bool // New field to indicate weekends
-
-}
-
 // Global variable to store all events and manage thread safety
 var (
-	allEvents  []Event
+	allEvents  []types.Event
 	eventsLock sync.RWMutex
 )
 
@@ -46,7 +38,7 @@ func Home(c echo.Context) error {
 	}
 
 	// Generate calendar for the current month
-	weeks := getCalendarMonth(currentDate)
+	weeks := utils.GetCalendarMonth(currentDate)
 
 	// Precompute formatted dates for navigation links
 	prevMonthDate := currentDate.AddDate(0, -1, 0)
@@ -56,7 +48,7 @@ func Home(c echo.Context) error {
 	for weekIdx, week := range weeks {
 		for dayIdx, day := range week {
 			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
-			dayEvents := []Event{}
+			dayEvents := []types.Event{}
 
 			for _, event := range allEvents {
 				if event.Date.Format("2006-01-02") == dateStr {
@@ -85,7 +77,7 @@ func Home(c echo.Context) error {
 	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
 	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 	// Calculate In-Office Average
-	inOfficeCount, totalDays := calculateInOfficeAverage(allEvents, startDate, endDate)
+	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
 
 	average := 0.0
 	averageDays := 0.0

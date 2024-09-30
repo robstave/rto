@@ -233,7 +233,7 @@ p {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.calendar th,
+
 .calendar td {
     width: 14.28%;
     height: 100px;
@@ -246,11 +246,24 @@ p {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.calendar th {
+.calendar th  {
+    width: 14.28%;
+    
+   
+    vertical-align: top;
+    border: 1px solid var(--color-border);
+    padding: 10px !important;
+    box-sizing: border-box;
+    position: relative;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
     background-color: #f2f2f2;
     font-weight: bold;
     text-align: center;
+    height: 20px;
 }
+
+
+ 
 
 .calendar td.not-current-month {
     color: #a0a0a0;

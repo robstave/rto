@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
 )
 
 // AddEvent handles the addition of new events via form submission
@@ -30,7 +32,7 @@ func AddEvent(c echo.Context) error {
 	}
 
 	// Initialize Event struct
-	newEvent := Event{
+	newEvent := types.Event{
 		Date:        eventDate,
 		Description: description,
 		Type:        eventType,
@@ -98,7 +100,7 @@ func ToggleAttendance(c echo.Context) error {
 	// Find the attendance event on the given date
 	found := false
 	for i, event := range allEvents {
-		if sameDay(event.Date, eventDate) && event.Type == "attendance" {
+		if utils.SameDay(event.Date, eventDate) && event.Type == "attendance" {
 			// Toggle the IsInOffice flag
 			allEvents[i].IsInOffice = !event.IsInOffice
 			logger.Info("found and toggled", "value", allEvents[i].IsInOffice)
@@ -124,7 +126,7 @@ func ToggleAttendance(c echo.Context) error {
 	// Determine the new status
 	newStatus := "remote"
 	for _, event := range allEvents {
-		if sameDay(event.Date, eventDate) && event.Type == "attendance" {
+		if utils.SameDay(event.Date, eventDate) && event.Type == "attendance" {
 			if event.IsInOffice {
 				newStatus = "in"
 			}
@@ -137,7 +139,7 @@ func ToggleAttendance(c echo.Context) error {
 	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
 	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 
-	inOfficeCount, totalDays := calculateInOfficeAverage(allEvents, startDate, endDate)
+	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
 
 	average := 0.0
 	averageDays := 0.0
@@ -306,7 +308,7 @@ func AddDefaultDays(c echo.Context) error {
 		// Check if an event already exists on this day
 		eventExists := false
 		for _, event := range allEvents {
-			if sameDay(event.Date, d) {
+			if utils.SameDay(event.Date, d) {
 				eventExists = true
 				break
 			}
@@ -314,7 +316,7 @@ func AddDefaultDays(c echo.Context) error {
 
 		if !eventExists {
 			// Create a new attendance event
-			newEvent := Event{
+			newEvent := types.Event{
 				Date:        d,
 				Description: "",
 				IsInOffice:  isInOffice,
