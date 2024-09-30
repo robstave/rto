@@ -6,9 +6,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/robstave/rto/handlers"
+	"github.com/robstave/rto/internal/adapters/controller"
 )
 
-func GetEcho() *echo.Echo {
+func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 
 	e := echo.New()
 

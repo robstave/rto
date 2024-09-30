@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/robstave/rto/handlers"
 	api "github.com/robstave/rto/internal"
+	"github.com/robstave/rto/internal/adapters/controller"
 
 	slogecho "github.com/samber/slog-echo"
 )
@@ -27,7 +28,9 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 func main() {
 
-	e := api.GetEcho()
+	rtoClt := controller.NewRTOController("kkok")
+
+	e := api.GetEcho(rtoClt)
 
 	handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
 
