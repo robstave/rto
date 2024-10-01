@@ -1,8 +1,6 @@
 package api
 
 import (
-	"log"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/robstave/rto/internal/adapters/controller"
@@ -15,15 +13,6 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// Middleware (optional)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
-	log.Println("set logger")
-
-	//handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
-
-	// not working
-	//lg := handlers.GetLogger()
-	//mw := slogecho.New(lg)
-	//e.Use(mw)
 
 	// Static files
 	e.Static("/static", "static")

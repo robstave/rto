@@ -40,9 +40,6 @@ func (s *Service) AddEvent(event types.Event) error {
 // SaveEvents saves the current list of events to the specified JSON file.
 func SaveEvents(filePath string) error {
 
-	//eventsLock.RLock()
-	//defer eventsLock.RUnlock()
-
 	data, err := json.MarshalIndent(allEvents, "", "    ")
 	if err != nil {
 		return err

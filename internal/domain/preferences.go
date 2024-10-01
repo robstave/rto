@@ -9,8 +9,6 @@ import (
 )
 
 func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error {
-	//preferencesLock.Lock()
-	//defer s.preferencesLock.Unlock()
 
 	s.preferences.DefaultDays = defaultDays
 	s.preferences.TargetDays = targetDays
@@ -25,8 +23,6 @@ func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error
 }
 
 func (s *Service) SavePreferences(filePath string) error {
-	//s.preferencesLock.RLock()
-	//defer s.preferencesLock.RUnlock()
 
 	data, err := json.MarshalIndent(s.preferences, "", "    ")
 	if err != nil {

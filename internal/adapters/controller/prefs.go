@@ -14,8 +14,6 @@ import (
 
 // ShowPrefs renders the preferences page with current default in-office days and target
 func (ctlr *RTOController) ShowPrefs(c echo.Context) error {
-	//preferencesLock.RLock()
-	//defer preferencesLock.RUnlock()
 
 	data := map[string]interface{}{
 		"Preferences": ctlr.service.GetPrefs(),

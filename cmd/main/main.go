@@ -35,8 +35,6 @@ func main() {
 	mw := slogecho.New(slogger)
 	e.Use(mw)
 
-	// not working
-
 	funcMap := template.FuncMap{
 		"formatDate": func(t time.Time, layout string) string {
 			return t.Format(layout)
@@ -50,11 +48,6 @@ func main() {
 	e.Renderer = renderer
 
 	log.Println("templates loaded")
-
-	// Initialize events
-	log.Println("init events")
-
-	// Initialize preferences
 
 	log.Println("starting")
 	// Start the server on port 8761

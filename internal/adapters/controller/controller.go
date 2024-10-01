@@ -35,8 +35,10 @@ func NewRTOController(
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&types.Event{}, &types.Preferences{})
-
+	if err := db.AutoMigrate(&types.Event{}, &types.Preferences{}); err != nil {
+		logger.Error("AutoMigrate failed", "error", err)
+		panic("Failed to migrate database")
+	}
 	// Initialize repositories
 	eventRepo := repo.NewEventRepositorySQLite(db)
 	preferenceRepo := repo.NewPreferenceRepositorySQLite(db)
