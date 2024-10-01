@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -32,6 +33,13 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		filePath := scanner.Text()
+		trimmedLine := strings.TrimSpace(filePath)
+
+		// Skip lines that start with '#'
+		if strings.HasPrefix(trimmedLine, "#") {
+			continue
+		}
+
 		log.Printf(filePath)
 		// Read the contents of each file
 		data, err := ioutil.ReadFile(filepath.Clean(filePath))

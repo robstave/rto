@@ -4,7 +4,8 @@ go 1.23.0
 
 require (
 	github.com/labstack/echo/v4 v4.12.0
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	gorm.io/driver/sqlite v1.5.6
+	gorm.io/gorm v1.25.12
 )
 
 require (
@@ -14,8 +15,7 @@ require (
 	github.com/samber/lo v1.38.1 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
-	gorm.io/driver/sqlite v1.5.6 // indirect
-	gorm.io/gorm v1.25.12 // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 )
 
 require (
