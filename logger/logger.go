@@ -1,6 +1,6 @@
-// handlers/logger.go
+// logger/logger.go
 
-package handlers
+package logger
 
 import (
 	"os"

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/robstave/rto/handlers"
 	api "github.com/robstave/rto/internal"
 	"github.com/robstave/rto/internal/adapters/controller"
+	"github.com/robstave/rto/logger"
 
 	slogecho "github.com/samber/slog-echo"
 )
@@ -27,8 +27,8 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 func main() {
 
-	slogger := handlers.InitializeLogger()
-	handlers.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
+	slogger := logger.InitializeLogger()
+	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
 	rtoClt := controller.NewRTOController(slogger)
 
 	e := api.GetEcho(rtoClt)
