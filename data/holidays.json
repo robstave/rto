@@ -1,18 +1,56 @@
 [
-    {
-      "date": "2024-11-23",
-      "name": "Thanksgiving Day",
-      "type": "holiday"
-    },
-    {
-      "date": "2024-12-25",
-      "name": "Christmas Day",
-      "type": "holiday"
-    },
-    {
-      "date": "2024-12-31",
-      "name": "New Year's Eve",
-      "type": "vacation"
-    }
-  ]
+  {
+    "date": "2024-11-21",
+    "description": "Thanksgiving",
+    "type": "holiday"
+  },
+  {
+    "date": "2024-11-22",
+    "description": "Float",
+    "type": "vacation"
+  },
+  {
+    "date": "2024-12-25",
+    "description": "Christmas",
+    "type": "holiday"
+  },
+
+  {
+    "date": "2024-10-31",
+    "description": "PTO",
+    "type": "vacation"
+  },
+  {
+    "date": "2024-11-1",
+    "description": "PTO",
+    "type": "vacation"
+  },
   
+  {
+    "date": "2024-12-23",
+    "description": "Float",
+    "type": "vacation"
+  },
+
+  {
+    "date": "2024-12-24",
+    "description": "PTO",
+    "type": "vacation"
+  },
+  {
+    "date": "2024-12-26",
+    "description": "PTO",
+    "type": "vacation"
+  },
+  {
+    "date": "2024-12-27",
+    "description": "PTO",
+    "type": "vacation"
+  },
+  {
+    "date": "2024-12-31",
+    "description": "New Years",
+    "type": "holiday"
+  }
+  
+]

@@ -216,31 +216,42 @@ func processRawHolidays(s *Service, rawEvents []RawHoliday) ([]types.Event, []er
 func (s *Service) AddDefaultDays() error {
 	s.logger.Info("AddDefaultDays triggered")
 
-	// Define the date range: October 1 to December 31 of the current year
-	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	// Get current preferences
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Failed to get preferences", "error", err)
+		return err
+	}
 
-	// Retrieve default in-office days from preferences
-	//s.preferencesLock.RLock()
-	defaultDays := strings.Split(s.preferences.DefaultDays, ",")
-	//s.preferencesLock.RUnlock()
-
-	// Create a map for faster lookup of default in-office days
+	// Parse default days
+	defaultDays := strings.Split(prefs.DefaultDays, ",")
 	defaultDaysMap := make(map[string]bool)
 	for _, day := range defaultDays {
 		day = strings.TrimSpace(strings.ToLower(day))
 		defaultDaysMap[day] = true
 	}
 
-	// Lock events for writing
-	//s.eventsLock.Lock()
-	//defer s.eventsLock.Unlock()
+	// Define the date range
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 
-	// Counter for added events
+	// Retrieve existing events
+	existingEvents, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Failed to retrieve events", "error", err)
+		return err
+	}
+
+	// Create a map of existing event dates
+	existingEventDates := make(map[string]bool)
+	for _, event := range existingEvents {
+		dateStr := event.Date.Format("2006-01-02")
+		existingEventDates[dateStr] = true
+	}
+
+	// Add default attendance events
 	addedCount := 0
-
-	// Iterate through each day in the date range
 	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
 		// Map Go's Weekday to user's day abbreviations
 		var dayAbbrev string
@@ -268,22 +279,10 @@ func (s *Service) AddDefaultDays() error {
 		}
 
 		// Determine if it's a default in-office day
-		isInOffice, isDefault := defaultDaysMap[dayAbbrevLower]
-		if !isDefault {
-			// Non-default days are considered remote
-			isInOffice = false
-		}
+		isInOffice := defaultDaysMap[dayAbbrevLower]
 
-		// Check if an event already exists on this day
-		eventExists := false
-		for _, event := range allEvents {
-			if utils.SameDay(event.Date, d) {
-				eventExists = true
-				break
-			}
-		}
-
-		if !eventExists {
+		dateStr := d.Format("2006-01-02")
+		if !existingEventDates[dateStr] {
 			// Create a new attendance event
 			newEvent := types.Event{
 				Date:        d,
@@ -291,19 +290,15 @@ func (s *Service) AddDefaultDays() error {
 				IsInOffice:  isInOffice,
 				Type:        "attendance",
 			}
-			allEvents = append(allEvents, newEvent)
+			err := s.eventRepo.AddEvent(newEvent)
+			if err != nil {
+				s.logger.Error("Failed to add event", "date", dateStr, "error", err)
+				continue
+			}
 			addedCount++
 		}
 	}
 
-	s.logger.Info("AddDefaultDays: added events.", "count", addedCount)
-
-	// Save the updated events to events.json
-	eventsFilePath := "data/events.json"
-	if err := SaveEvents(eventsFilePath); err != nil {
-		s.logger.Error("Error saving events", "error", err)
-		return err
-	}
-
+	s.logger.Info("AddDefaultDays completed", "events_added", addedCount)
 	return nil
 }
