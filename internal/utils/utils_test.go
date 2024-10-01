@@ -7,15 +7,6 @@ import (
 	"github.com/robstave/rto/internal/domain/types"
 )
 
-// Helper function to reset global variables before each test
-/*
-func resetGlobals() {
-	eventsLock.Lock()
-	defer eventsLock.Unlock()
-	allEvents = []types.Event{}
-}
-*/
-
 // TestCalculateInOfficeAverage tests the calculateInOfficeAverage function with the updated signature
 func TestCalculateInOfficeAverage(t *testing.T) {
 

@@ -48,8 +48,7 @@ func NewService(
 		preferenceRepo: preferenceRepo,
 	}
 
-	preferencesPath := filepath.Join("data", "preferences.json")
-	service.preferences = initializePreferences(&service, preferencesPath)
+	service.preferences = initializePreferences(&service)
 	holidaysPath := filepath.Join("data", "holidays.json")
 	eventsPath := filepath.Join("data", "events.json")
 	initializeEvents(&service, holidaysPath, eventsPath)

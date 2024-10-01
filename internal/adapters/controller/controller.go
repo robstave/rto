@@ -66,6 +66,10 @@ func NewRTOController(
 	return &RTOController{service, logger}
 }
 
+func NewRTOControllerWithMock(service domain.RTOBLL) *RTOController {
+	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
+}
+
 func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
 	// Load holidays from JSON file
 	holidaysPath := filepath.Join("data", "holidays.json")

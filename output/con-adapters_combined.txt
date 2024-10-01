@@ -35,8 +35,10 @@ func NewRTOController(
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&types.Event{}, &types.Preferences{})
-
+	if err := db.AutoMigrate(&types.Event{}, &types.Preferences{}); err != nil {
+		logger.Error("AutoMigrate failed", "error", err)
+		panic("Failed to migrate database")
+	}
 	// Initialize repositories
 	eventRepo := repo.NewEventRepositorySQLite(db)
 	preferenceRepo := repo.NewPreferenceRepositorySQLite(db)
@@ -62,6 +64,10 @@ func NewRTOController(
 	)
 
 	return &RTOController{service, logger}
+}
+
+func NewRTOControllerWithMock(service domain.RTOBLL) *RTOController {
+	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
 }
 
 func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
@@ -364,8 +370,6 @@ import (
 
 // ShowPrefs renders the preferences page with current default in-office days and target
 func (ctlr *RTOController) ShowPrefs(c echo.Context) error {
-	//preferencesLock.RLock()
-	//defer preferencesLock.RUnlock()
 
 	data := map[string]interface{}{
 		"Preferences": ctlr.service.GetPrefs(),

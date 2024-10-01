@@ -35,8 +35,6 @@ func main() {
 	mw := slogecho.New(slogger)
 	e.Use(mw)
 
-	// not working
-
 	funcMap := template.FuncMap{
 		"formatDate": func(t time.Time, layout string) string {
 			return t.Format(layout)
@@ -50,11 +48,6 @@ func main() {
 	e.Renderer = renderer
 
 	log.Println("templates loaded")
-
-	// Initialize events
-	log.Println("init events")
-
-	// Initialize preferences
 
 	log.Println("starting")
 	// Start the server on port 8761
@@ -70,8 +63,6 @@ func main() {
 package api
 
 import (
-	"log"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/robstave/rto/internal/adapters/controller"
@@ -84,15 +75,6 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// Middleware (optional)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
-	log.Println("set logger")
-
-	//handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
-
-	// not working
-	//lg := handlers.GetLogger()
-	//mw := slogecho.New(lg)
-	//e.Use(mw)
 
 	// Static files
 	e.Static("/static", "static")
@@ -263,9 +245,6 @@ func (s *Service) AddEvent(event types.Event) error {
 
 // SaveEvents saves the current list of events to the specified JSON file.
 func SaveEvents(filePath string) error {
-
-	//eventsLock.RLock()
-	//defer eventsLock.RUnlock()
 
 	data, err := json.MarshalIndent(allEvents, "", "    ")
 	if err != nil {
@@ -541,8 +520,6 @@ import (
 )
 
 func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error {
-	//preferencesLock.Lock()
-	//defer s.preferencesLock.Unlock()
 
 	s.preferences.DefaultDays = defaultDays
 	s.preferences.TargetDays = targetDays
@@ -557,8 +534,6 @@ func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error
 }
 
 func (s *Service) SavePreferences(filePath string) error {
-	//s.preferencesLock.RLock()
-	//defer s.preferencesLock.RUnlock()
 
 	data, err := json.MarshalIndent(s.preferences, "", "    ")
 	if err != nil {

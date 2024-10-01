@@ -3,22 +3,31 @@ package domain
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 
 	"github.com/robstave/rto/internal/domain/types"
 )
 
 func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error {
-
-	s.preferences.DefaultDays = defaultDays
-	s.preferences.TargetDays = targetDays
-
-	// Save preferences to JSON file
-	preferencesFilePath := "data/preferences.json"
-	if err := s.SavePreferences(preferencesFilePath); err != nil {
-		s.logger.Error("Error saving preferences", "error", err)
+	// Fetch current preferences from the database
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Error fetching preferences", "error", err)
 		return err
 	}
+
+	// Update preferences fields
+	prefs.DefaultDays = defaultDays
+	prefs.TargetDays = targetDays
+
+	// Save updated preferences back to the database
+	if err := s.preferenceRepo.UpdatePreferences(prefs); err != nil {
+		s.logger.Error("Error updating preferences in repository", "error", err)
+		return err
+	}
+
+	// Update the service's local copy if necessary
+	s.preferences = prefs
+
 	return nil
 }
 
@@ -38,43 +47,27 @@ func (s *Service) SavePreferences(filePath string) error {
 }
 
 // InitializePreferences initializes preferences by loading the JSON file
-func initializePreferences(s *Service, filePath string) types.Preferences {
-	prefs, err := loadPreferences(s, filePath)
+func initializePreferences(s *Service) types.Preferences {
+	prefs, err := s.preferenceRepo.GetPreferences()
 	if err != nil {
-		s.logger.Error("Error loading preferences", "error", err)
+		s.logger.Error("Error loading preferences from database", "error", err)
 
-		// Set default preferences if loading fails
-
-		return types.Preferences{
-			DefaultDays: "T,W,Th,F", // Default to Tuesday, Wednesday, Thursday, Friday
+		// Set default preferences if loading fails or no preferences exist
+		defaultPrefs := types.Preferences{
+			DefaultDays: "M,T,W,Th,F", // Adjusted to include Monday by default
 			TargetDays:  "2.5",
 		}
 
-	} else {
-		s.logger.Info("Preferences loaded successfully.")
-		return prefs
-	}
-}
+		if err := s.preferenceRepo.UpdatePreferences(defaultPrefs); err != nil {
+			s.logger.Error("Error setting default preferences in database", "error", err)
+			// Handle as needed, possibly panic or return
+		} else {
+			s.logger.Info("Default preferences set in database.")
+		}
 
-// LoadPreferences loads preferences from a JSON file
-func loadPreferences(s *Service, filePath string) (types.Preferences, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return types.Preferences{}, err
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
-	if err != nil {
-		return types.Preferences{}, err
+		return defaultPrefs
 	}
 
-	var prefs types.Preferences
-	if err := json.Unmarshal(byteValue, &prefs); err != nil {
-		return types.Preferences{}, err
-	}
-
-	s.preferences = prefs
-
-	return types.Preferences{}, err
+	s.logger.Info("Preferences loaded successfully from database.")
+	return prefs
 }
