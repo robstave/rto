@@ -10,17 +10,24 @@ import (
 )
 
 func (s *Service) ToggleAttendance(eventDate time.Time) (string, error) {
-	eventsLock.Lock()
-	defer eventsLock.Unlock()
+	// Retrieve all events
+	events, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error retrieving events", "error", err)
+		return "", err
+	}
 
 	// Find the attendance event on the given date
 	found := false
 	var newStatus string
-	for i, event := range allEvents {
+	var eventToUpdate types.Event
+
+	for _, event := range events {
 		if utils.SameDay(event.Date, eventDate) && event.Type == "attendance" {
 			// Toggle the IsInOffice flag
-			allEvents[i].IsInOffice = !event.IsInOffice
-			if allEvents[i].IsInOffice {
+			event.IsInOffice = !event.IsInOffice
+			eventToUpdate = event
+			if event.IsInOffice {
 				newStatus = "in"
 			} else {
 				newStatus = "remote"
@@ -34,22 +41,28 @@ func (s *Service) ToggleAttendance(eventDate time.Time) (string, error) {
 		return "", errors.New("attendance event not found on the specified date")
 	}
 
-	// Save to events.json
-	eventsFilePath := "data/events.json"
-	if err := SaveEvents(eventsFilePath); err != nil {
-		s.logger.Error("Error saving events", "error", err)
+	// Update the event in the database
+	err = s.eventRepo.UpdateEvent(eventToUpdate)
+	if err != nil {
+		s.logger.Error("Error updating event", "error", err)
 		return "", err
 	}
 
 	return newStatus, nil
 }
 
+// CalculateAttendanceStats calculates all the stats
 func (s *Service) CalculateAttendanceStats() (*types.AttendanceStats, error) {
 	currentYear := time.Now().Year()
 	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
 	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
 
-	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
+	allTheEvents, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error fetching  events", "error", err)
+		return nil, err
+	}
+	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allTheEvents, startDate, endDate)
 
 	average := 0.0
 	averageDays := 0.0

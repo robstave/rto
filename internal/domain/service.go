@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	repository "github.com/robstave/rto/internal/adapters/repositories"
+
 	"github.com/robstave/rto/internal/domain/types"
 )
 
@@ -28,17 +30,22 @@ var (
 )
 
 type Service struct {
-	preferences types.Preferences
-	logger      *slog.Logger
+	preferences    types.Preferences
+	logger         *slog.Logger
+	eventRepo      repository.EventRepository
+	preferenceRepo repository.PreferenceRepository
 }
 
 func NewService(
 	logger *slog.Logger,
-
+	eventRepo repository.EventRepository,
+	preferenceRepo repository.PreferenceRepository,
 ) RTOBLL {
 
 	service := Service{
-		logger: logger,
+		logger:         logger,
+		eventRepo:      eventRepo,
+		preferenceRepo: preferenceRepo,
 	}
 
 	preferencesPath := filepath.Join("data", "preferences.json")

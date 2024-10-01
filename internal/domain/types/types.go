@@ -4,12 +4,18 @@ import (
 	"time"
 )
 
-// Event represents a calendar event
 type Event struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
 	Date        time.Time `json:"date"`
 	Description string    `json:"description"`
 	IsInOffice  bool      `json:"isInOffice"`
 	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
+}
+
+type Preferences struct {
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
+	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
 }
 
 // CalendarDay represents a single day in the calendar
@@ -19,12 +25,6 @@ type CalendarDay struct {
 	Today     bool
 	Events    []Event
 	IsWeekend bool // New field to indicate weekends
-
-}
-
-type Preferences struct {
-	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
-	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
 
 }
 

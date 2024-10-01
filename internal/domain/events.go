@@ -13,26 +13,28 @@ import (
 )
 
 func (s *Service) GetAllEvents() []types.Event {
-	return allEvents
+	events, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error getting events", "error", err)
+		return []types.Event{}
+	}
+	return events
 }
 func (s *Service) GetPrefs() types.Preferences {
-	return s.preferences
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Error getting preferences", "error", err)
+		// Return default preferences or handle error as needed
+	}
+	return prefs
 }
 
 func (s *Service) AddEvent(event types.Event) error {
-	eventsLock.Lock()
-	defer eventsLock.Unlock()
-
-	allEvents = append(allEvents, event)
-
-	// Save to events.json
-	eventsFilePath := "data/events.json"
-	err := SaveEvents(eventsFilePath)
+	err := s.eventRepo.AddEvent(event)
 	if err != nil {
-		s.logger.Error("Error saving events", "error", err)
-		return err
+		s.logger.Error("Error adding event", "error", err)
 	}
-	return nil
+	return err
 }
 
 // SaveEvents saves the current list of events to the specified JSON file.
