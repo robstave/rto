@@ -1,0 +1,637 @@
+package controller
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"log/slog"
+	"path/filepath"
+
+	"os"
+
+	repo "github.com/robstave/rto/internal/adapters/repositories"
+	"github.com/robstave/rto/internal/domain"
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
+
+type RTOController struct {
+	service domain.RTOBLL
+
+	logger *slog.Logger
+}
+
+func NewRTOController(
+	logger *slog.Logger,
+
+) *RTOController {
+
+	logger.Info("creating Database")
+	db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
+	if err != nil {
+		logger.Error("Failed to connect to database", "error", err)
+		panic("Failed to connect to database")
+	}
+
+	// Migrate the schema
+	db.AutoMigrate(&types.Event{}, &types.Preferences{})
+
+	// Initialize repositories
+	eventRepo := repo.NewEventRepositorySQLite(db)
+	preferenceRepo := repo.NewPreferenceRepositorySQLite(db)
+
+	// Insert default Preferences if none exist
+	err = initializeDefaultPreferences(db, logger)
+	if err != nil {
+		logger.Error("Failed to initialize default preferences", "error", err)
+		panic("Failed to initialize default preferences")
+	}
+
+	// Initialize holidays
+	err = initializeHolidays(db, logger)
+	if err != nil {
+		logger.Error("Failed to initialize holidays", "error", err)
+		panic("Failed to initialize holidays")
+	}
+
+	service := domain.NewService(
+		logger,
+		eventRepo,
+		preferenceRepo,
+	)
+
+	return &RTOController{service, logger}
+}
+
+func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
+	// Load holidays from JSON file
+	holidaysPath := filepath.Join("data", "holidays.json")
+	file, err := os.Open(holidaysPath)
+	if err != nil {
+		logger.Error("Failed to open holidays.json", "error", err)
+		return err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		logger.Error("Failed to read holidays.json", "error", err)
+		return err
+	}
+
+	// Define a temporary struct for unmarshaling
+	type RawHoliday struct {
+		Date        string `json:"date"`
+		Description string `json:"description"`
+		Type        string `json:"type"`       // e.g., "holiday", "vacation"
+		IsInOffice  bool   `json:"isInOffice"` // Optional
+	}
+
+	var rawHolidays []RawHoliday
+	if err := json.Unmarshal(byteValue, &rawHolidays); err != nil {
+		logger.Error("Failed to parse holidays.json", "error", err)
+		return err
+	}
+
+	// Insert holidays into the database if they don't already exist
+	for _, rawHoliday := range rawHolidays {
+		// Parse date
+		date, err := utils.ParseDate(rawHoliday.Date)
+		if err != nil {
+			logger.Error("Invalid date in holidays.json", "date", rawHoliday.Date, "error", err)
+			continue
+		}
+
+		// Create an Event
+		holiday := types.Event{
+			Date:        date,
+			Description: rawHoliday.Description,
+			Type:        rawHoliday.Type,
+			IsInOffice:  false, // Holidays override attendance
+		}
+
+		// Check if the holiday already exists
+		var count int64
+		db.Model(&types.Event{}).
+			Where("date = ? AND type = ?", date, holiday.Type).
+			Count(&count)
+
+		if count == 0 {
+			// Insert holiday
+			if err := db.Create(&holiday).Error; err != nil {
+				logger.Error("Failed to insert holiday", "date", date, "error", err)
+			} else {
+				logger.Info("Inserted holiday", "date", date, "name", holiday.Description)
+			}
+		}
+	}
+
+	return nil
+}
+
+
+=== End of internal/adapters/controller/controller.go ===
+
+package controller
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+// EventsList handles displaying the list of events
+func (ctlr *RTOController) EventsList(c echo.Context) error {
+	// Pass allEvents to the template
+	data := map[string]interface{}{
+		"Events": ctlr.service.GetAllEvents(),
+	}
+
+	return c.Render(http.StatusOK, "events.html", data)
+}
+
+// ShowAddEventForm renders the Add Event form
+func (ctlr *RTOController) ShowAddEventForm(c echo.Context) error {
+	return c.Render(http.StatusOK, "add_event.html", nil)
+}
+
+// AddEvent handles the addition of new events via form submission
+func (ctlr *RTOController) AddEvent(c echo.Context) error {
+	dateStr := c.FormValue("date")   // Expected format: YYYY-MM-DD
+	eventType := c.FormValue("type") // "holiday", "vacation", "attendance"
+	description := c.FormValue("description")
+	isInOfficeStr := c.FormValue("isInOffice") // "true" or "false"
+
+	if dateStr == "" || eventType == "" {
+		return c.String(http.StatusBadRequest, "Date and Event Type are required")
+	}
+
+	// Parse the date
+	eventDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		ctlr.logger.Error("Error parsing date", "fn", "AddEvent", "date", err)
+		return c.String(http.StatusBadRequest, "Invalid date format")
+	}
+
+	// Initialize Event struct
+	newEvent := types.Event{
+		Date:        eventDate,
+		Description: description,
+		Type:        eventType,
+	}
+
+	// Handle Attendance Type
+	if eventType == "attendance" {
+		if isInOfficeStr == "true" {
+			newEvent.IsInOffice = true
+		} else {
+			newEvent.IsInOffice = false
+		}
+	}
+
+	// Call domain service to add event
+	err = ctlr.service.AddEvent(newEvent)
+	if err != nil {
+		ctlr.logger.Error("Error adding event", "error", err)
+		return c.String(http.StatusInternalServerError, "Failed to add event.")
+	}
+
+	// Redirect back to the calendar
+	return c.Redirect(http.StatusSeeOther, "/")
+}
+
+func (ctlr *RTOController) AddDefaultDays(c echo.Context) error {
+	err := ctlr.service.AddDefaultDays()
+	if err != nil {
+		ctlr.logger.Error("Error adding default days", "error", err)
+		return c.String(http.StatusInternalServerError, "Failed to add default attendance events.")
+	}
+	return c.Redirect(http.StatusSeeOther, "/prefs")
+}
+
+
+=== End of internal/adapters/controller/events.go ===
+
+package controller
+
+import (
+	"log"
+	"net/http"
+	"strconv"
+
+	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+
+	"github.com/labstack/echo/v4"
+)
+
+// Home renders the calendar on the home page
+func (ctlr *RTOController) Home(c echo.Context) error {
+
+	allEvents := ctlr.service.GetAllEvents()
+	// Get current date or date from query parameters
+	currentDate := time.Now()
+	yearParam := c.QueryParam("year")
+	monthParam := c.QueryParam("month")
+	dayParam := c.QueryParam("day")
+
+	if yearParam != "" && monthParam != "" && dayParam != "" {
+		year, err1 := strconv.Atoi(yearParam)
+		month, err2 := strconv.Atoi(monthParam)
+		day, err3 := strconv.Atoi(dayParam)
+		if err1 == nil && err2 == nil && err3 == nil {
+			currentDate = time.Date(year, time.Month(month), day, 0, 0, 0, 0, currentDate.Location())
+		}
+	}
+
+	// Generate calendar for the current month
+	weeks := utils.GetCalendarMonth(currentDate)
+
+	// Precompute formatted dates for navigation links
+	prevMonthDate := currentDate.AddDate(0, -1, 0)
+	nextMonthDate := currentDate.AddDate(0, 1, 0)
+
+	// Assign events to the corresponding days
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			dateStr := day.Date.Format("2006-01-02") // YYYY-MM-DD
+			dayEvents := []types.Event{}
+
+			for _, event := range allEvents {
+				if event.Date.Format("2006-01-02") == dateStr {
+					dayEvents = append(dayEvents, event)
+				}
+			}
+
+			weeks[weekIdx][dayIdx].Events = dayEvents
+
+		}
+	}
+
+	// Define 'today' before the loop
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	// Assign Today Flag
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			if day.Date.Equal(today) {
+				weeks[weekIdx][dayIdx].Today = true
+			}
+		}
+	}
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	// Calculate In-Office Average
+	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
+
+	average := 0.0
+	averageDays := 0.0
+	if totalDays > 0 {
+		average = (float64(inOfficeCount) / float64(totalDays)) * 100
+		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 //average days/week
+	}
+
+	// Fetch target days from preferences
+
+	currentPreferences := ctlr.service.GetPrefs()
+
+	data := map[string]interface{}{
+		"CurrentDate": currentDate,
+		"Weeks":       weeks,
+		"PrevMonth": map[string]string{
+			"year":  prevMonthDate.Format("2006"),
+			"month": prevMonthDate.Format("01"),
+			"day":   prevMonthDate.Format("02"),
+		},
+		"NextMonth": map[string]string{
+			"year":  nextMonthDate.Format("2006"),
+			"month": nextMonthDate.Format("01"),
+			"day":   nextMonthDate.Format("02"),
+		},
+		"InOfficeCount": inOfficeCount,
+		"TotalDays":     totalDays,
+		"Average":       average,
+		"AverageDays":   averageDays,
+		"Preferences":   currentPreferences, // Add Preferences here
+
+	}
+
+	//log
+	for weekIdx, week := range weeks {
+		for dayIdx, day := range week {
+			// Existing event assignment logic
+
+			// Debugging: Log events for each day
+			if len(weeks[weekIdx][dayIdx].Events) > 0 {
+				log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+			}
+		}
+	}
+
+	// Render the template
+	if err := c.Render(http.StatusOK, "home.html", data); err != nil {
+		ctlr.logger.Error("Template rendering error:", "error", err)
+
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return nil
+}
+
+
+=== End of internal/adapters/controller/home.go ===
+
+package controller
+
+import (
+	"net/http"
+
+	"log/slog"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/robstave/rto/internal/domain/types"
+
+	"gorm.io/gorm"
+)
+
+// ShowPrefs renders the preferences page with current default in-office days and target
+func (ctlr *RTOController) ShowPrefs(c echo.Context) error {
+	//preferencesLock.RLock()
+	//defer preferencesLock.RUnlock()
+
+	data := map[string]interface{}{
+		"Preferences": ctlr.service.GetPrefs(),
+	}
+
+	return c.Render(http.StatusOK, "prefs.html", data)
+}
+
+func (ctlr *RTOController) UpdatePreferences(c echo.Context) error {
+	newDefaultDays := c.FormValue("defaultDays")
+	newTargetDays := c.FormValue("targetDays")
+
+	if newDefaultDays == "" || newTargetDays == "" {
+		return c.String(http.StatusBadRequest, "Default Days and Target Days are required.")
+	}
+
+	// Call domain service to update preferences
+	err := ctlr.service.UpdatePreferences(newDefaultDays, newTargetDays)
+	if err != nil {
+		ctlr.logger.Error("Error updating preferences", "error", err)
+		return c.String(http.StatusInternalServerError, "Failed to update preferences.")
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/prefs")
+}
+
+func initializeDefaultPreferences(db *gorm.DB, logger *slog.Logger) error {
+	var count int64
+	if err := db.Model(&types.Preferences{}).Count(&count).Error; err != nil {
+		logger.Error("Failed to count preferences", "error", err)
+		return err
+	}
+
+	if count == 0 {
+		// No preferences found; create default
+		prefs := types.Preferences{
+			DefaultDays: "M,T,W,Th", // Default to first 4 days in week
+			TargetDays:  "2.5",
+		}
+		if err := db.Create(&prefs).Error; err != nil {
+			logger.Error("Failed to create default preferences", "error", err)
+			return err
+		}
+		logger.Info("Default preferences created")
+	} else {
+		logger.Info("Preferences already exist")
+	}
+
+	return nil
+}
+
+
+=== End of internal/adapters/controller/prefs.go ===
+
+package controller
+
+import (
+	"net/http"
+
+	"time"
+
+	"github.com/labstack/echo/v4"
+)
+
+// ToggleAttendanceRequest represents the JSON payload for toggling attendance
+type ToggleAttendanceRequest struct {
+	Date string `json:"date"` // Expected format: YYYY-MM-DD
+}
+
+// ToggleAttendanceResponse represents the JSON response after toggling
+type ToggleAttendanceResponse struct {
+	Success       bool    `json:"success"`
+	NewStatus     string  `json:"newStatus,omitempty"` // "in" or "remote"
+	Message       string  `json:"message,omitempty"`
+	InOfficeCount int     `json:"inOfficeCount,omitempty"`
+	TotalDays     int     `json:"totalDays,omitempty"`
+	Average       float64 `json:"average,omitempty"`
+	AverageDays   float64 `json:"averageDays,omitempty"`
+	TargetDays    float64 `json:"targetDays,omitempty"` // New field for target value
+}
+
+// ToggleAttendance handles toggling attendance status for a given date
+func (ctlr *RTOController) ToggleAttendance(c echo.Context) error {
+	req := new(ToggleAttendanceRequest)
+	if err := c.Bind(req); err != nil {
+		ctlr.logger.Error("Error binding request", "error", err)
+		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Invalid request payload.",
+		})
+	}
+
+	// Parse the date
+	eventDate, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		ctlr.logger.Error("Error parsing date", "fn", "ToggleAttendance", "error", err)
+		return c.JSON(http.StatusBadRequest, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Invalid date format. Expected YYYY-MM-DD.",
+		})
+	}
+
+	// Call domain service to toggle attendance
+	newStatus, err := ctlr.service.ToggleAttendance(eventDate)
+	if err != nil {
+		ctlr.logger.Error("Error toggling attendance", "error", err)
+		return c.JSON(http.StatusInternalServerError, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Failed to toggle attendance.",
+		})
+	}
+
+	// After toggling, recalculate stats
+	stats, err := ctlr.service.CalculateAttendanceStats()
+	if err != nil {
+		ctlr.logger.Error("Error calculating stats", "error", err)
+		return c.JSON(http.StatusInternalServerError, ToggleAttendanceResponse{
+			Success: false,
+			Message: "Failed to calculate attendance statistics.",
+		})
+	}
+
+	return c.JSON(http.StatusOK, ToggleAttendanceResponse{
+		Success:       true,
+		NewStatus:     newStatus,
+		InOfficeCount: stats.InOfficeCount,
+		TotalDays:     stats.TotalDays,
+		Average:       stats.Average,
+		AverageDays:   stats.AverageDays,
+		TargetDays:    stats.TargetDays,
+	})
+}
+
+
+=== End of internal/adapters/controller/toggle.go ===
+
+package repository
+
+import (
+	"log/slog"
+)
+
+type Service struct {
+	eventRepo      EventRepository
+	preferenceRepo PreferenceRepository
+	logger         *slog.Logger
+}
+
+
+=== End of internal/adapters/repositories/service.go ===
+
+package repository
+
+import (
+	"gorm.io/gorm"
+)
+
+type EventRepositorySQLite struct {
+	db *gorm.DB
+}
+
+func NewEventRepositorySQLite(db *gorm.DB) EventRepository {
+	return &EventRepositorySQLite{db: db}
+}
+
+
+=== End of internal/adapters/repositories/event_repository_sqlite.go ===
+
+package repository
+
+import (
+	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+type EventRepository interface {
+	GetAllEvents() ([]types.Event, error)
+	AddEvent(event types.Event) error
+	UpdateEvent(event types.Event) error
+	DeleteEvent(eventID int) error
+	GetEventByDate(date time.Time) (types.Event, error)
+	// Add other methods as needed
+}
+
+type PreferenceRepository interface {
+	GetPreferences() (types.Preferences, error)
+	UpdatePreferences(prefs types.Preferences) error
+	// Add other methods as needed
+}
+
+
+=== End of internal/adapters/repositories/event_repository.go ===
+
+package repository
+
+import (
+	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+func (r *EventRepositorySQLite) GetAllEvents() ([]types.Event, error) {
+	var events []types.Event
+	result := r.db.Find(&events)
+	return events, result.Error
+}
+
+func (r *EventRepositorySQLite) AddEvent(event types.Event) error {
+	result := r.db.Create(&event)
+	return result.Error
+}
+
+func (r *EventRepositorySQLite) UpdateEvent(event types.Event) error {
+	result := r.db.Save(&event)
+	return result.Error
+}
+
+func (r *EventRepositorySQLite) DeleteEvent(eventID int) error {
+	result := r.db.Delete(&types.Event{}, eventID)
+	return result.Error
+}
+
+func (r *EventRepositorySQLite) GetEventByDate(date time.Time) (types.Event, error) {
+	var event types.Event
+	result := r.db.Where("date = ?", date).First(&event)
+	return event, result.Error
+}
+
+
+=== End of internal/adapters/repositories/events.go ===
+
+package repository
+
+import (
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+func (r *PreferenceRepositorySQLite) GetPreferences() (types.Preferences, error) {
+	var prefs types.Preferences
+	result := r.db.First(&prefs)
+	return prefs, result.Error
+}
+
+func (r *PreferenceRepositorySQLite) UpdatePreferences(prefs types.Preferences) error {
+	result := r.db.Save(&prefs)
+	return result.Error
+}
+
+
+=== End of internal/adapters/repositories/prefs.go ===
+
+package repository
+
+import (
+	"gorm.io/gorm"
+)
+
+type PreferenceRepositorySQLite struct {
+	db *gorm.DB
+}
+
+func NewPreferenceRepositorySQLite(db *gorm.DB) PreferenceRepository {
+	return &PreferenceRepositorySQLite{db: db}
+}
+
+
+=== End of internal/adapters/repositories/preference_repository_sqlite.go ===
+

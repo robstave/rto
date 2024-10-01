@@ -1,0 +1,40 @@
+#readme.md
+#observations.md
+#directives.md
+ 
+
+
+con-adapters:
+  - internal/adapters/controller/controller.go
+  - internal/adapters/controller/events.go
+  - internal/adapters/controller/home.go
+  - internal/adapters/controller/prefs.go
+  - internal/adapters/controller/toggle.go
+  - internal/adapters/repositories/service.go
+  - internal/adapters/repositories/event_repository_sqlite.go
+  - internal/adapters/repositories/event_repository.go
+  - internal/adapters/repositories/events.go
+  - internal/adapters/repositories/prefs.go
+  - internal/adapters/repositories/preference_repository_sqlite.go
+
+ 
+
+
+con-domain:
+  - cmd/main/main.go
+  - internal/echo-routes.go
+  - internal/domain/types/types.go
+  - internal/domain/service.go
+  - internal/domain/events.go
+  - internal/domain/preferences.go
+  - internal/domain/toggle.go
+  - internal/utils/utils.go
+
+con-templates:
+  - static/css/styles.css
+  - templates/home.html
+  - templates/events.html
+  - templates/prefs.html
+  - templates/add_event.html
+
+# Add more groups as needed

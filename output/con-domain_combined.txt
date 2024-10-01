@@ -1,0 +1,813 @@
+package main
+
+import (
+	"html/template"
+	"io"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	api "github.com/robstave/rto/internal"
+	"github.com/robstave/rto/internal/adapters/controller"
+	"github.com/robstave/rto/logger"
+
+	slogecho "github.com/samber/slog-echo"
+)
+
+// TemplateRenderer is a custom renderer for Echo
+type TemplateRenderer struct {
+	templates *template.Template
+}
+
+// Render renders a template document
+func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func main() {
+
+	slogger := logger.InitializeLogger()
+	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
+	rtoClt := controller.NewRTOController(slogger)
+
+	e := api.GetEcho(rtoClt)
+	mw := slogecho.New(slogger)
+	e.Use(mw)
+
+	// not working
+
+	funcMap := template.FuncMap{
+		"formatDate": func(t time.Time, layout string) string {
+			return t.Format(layout)
+		},
+	}
+
+	// Parse the templates with custom functions
+	renderer := &TemplateRenderer{
+		templates: template.Must(template.New("").Funcs(funcMap).ParseGlob("templates/*.html")),
+	}
+	e.Renderer = renderer
+
+	log.Println("templates loaded")
+
+	// Initialize events
+	log.Println("init events")
+
+	// Initialize preferences
+
+	log.Println("starting")
+	// Start the server on port 8761
+	if err := e.Start(":8761"); err != nil && err != http.ErrServerClosed {
+		log.Fatal("shutting down the server")
+	}
+
+}
+
+
+=== End of cmd/main/main.go ===
+
+package api
+
+import (
+	"log"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/robstave/rto/internal/adapters/controller"
+)
+
+func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
+
+	e := echo.New()
+
+	// Middleware (optional)
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	log.Println("set logger")
+
+	//handlers.SetLogger(handlers.InitializeLogger()) // Optional: If you prefer setting a package-level logger
+
+	// not working
+	//lg := handlers.GetLogger()
+	//mw := slogecho.New(lg)
+	//e.Use(mw)
+
+	// Static files
+	e.Static("/static", "static")
+
+	e.GET("/add-event", rtoCtl.ShowAddEventForm) // New route to show add event form
+	e.POST("/add-event", rtoCtl.AddEvent)        // Existing POST route to handle form submission
+
+	e.GET("/events", rtoCtl.EventsList)
+	e.GET("/prefs", rtoCtl.ShowPrefs)
+	e.POST("/prefs/update", rtoCtl.UpdatePreferences) // New route for updating preferences
+
+	// Routes
+	e.GET("/", rtoCtl.Home)
+
+	// Register the new route for toggling attendance
+	e.POST("/toggle-attendance", rtoCtl.ToggleAttendance)
+
+	// Register the new route for adding default days
+	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
+
+	return e
+}
+
+
+=== End of internal/echo-routes.go ===
+
+package types
+
+import (
+	"time"
+)
+
+type Event struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	Date        time.Time `json:"date"`
+	Description string    `json:"description"`
+	IsInOffice  bool      `json:"isInOffice"`
+	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
+}
+
+type Preferences struct {
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	DefaultDays string `json:"defaultDays"` // e.g., "M,T,W,Th,F"
+	TargetDays  string `json:"targetDays"`  // e.g., "2.5"
+}
+
+// CalendarDay represents a single day in the calendar
+type CalendarDay struct {
+	Date      time.Time
+	InMonth   bool
+	Today     bool
+	Events    []Event
+	IsWeekend bool // New field to indicate weekends
+
+}
+
+type AttendanceStats struct {
+	InOfficeCount int
+	TotalDays     int
+	Average       float64
+	AverageDays   float64
+	TargetDays    float64
+}
+
+
+=== End of internal/domain/types/types.go ===
+
+package domain
+
+import (
+	"log/slog"
+	"path/filepath"
+	"sync"
+	"time"
+
+	repository "github.com/robstave/rto/internal/adapters/repositories"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+// Interface for the RTO Business logic
+type RTOBLL interface {
+	GetAllEvents() []types.Event
+	GetPrefs() types.Preferences
+	ToggleAttendance(eventDate time.Time) (string, error)
+	AddEvent(event types.Event) error
+	CalculateAttendanceStats() (*types.AttendanceStats, error)
+	UpdatePreferences(defaultDays string, targetDays string) error
+	AddDefaultDays() error
+}
+
+// Global variable to store all events and manage thread safety.
+// Ideally this is in the service.  but lets park it here for now
+var (
+	allEvents  []types.Event
+	eventsLock sync.RWMutex
+)
+
+type Service struct {
+	preferences    types.Preferences
+	logger         *slog.Logger
+	eventRepo      repository.EventRepository
+	preferenceRepo repository.PreferenceRepository
+}
+
+func NewService(
+	logger *slog.Logger,
+	eventRepo repository.EventRepository,
+	preferenceRepo repository.PreferenceRepository,
+) RTOBLL {
+
+	service := Service{
+		logger:         logger,
+		eventRepo:      eventRepo,
+		preferenceRepo: preferenceRepo,
+	}
+
+	preferencesPath := filepath.Join("data", "preferences.json")
+	service.preferences = initializePreferences(&service, preferencesPath)
+	holidaysPath := filepath.Join("data", "holidays.json")
+	eventsPath := filepath.Join("data", "events.json")
+	initializeEvents(&service, holidaysPath, eventsPath)
+
+	return &service
+}
+
+
+=== End of internal/domain/service.go ===
+
+package domain
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"time"
+
+	"os"
+	"strings"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+)
+
+func (s *Service) GetAllEvents() []types.Event {
+	events, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error getting events", "error", err)
+		return []types.Event{}
+	}
+	return events
+}
+func (s *Service) GetPrefs() types.Preferences {
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Error getting preferences", "error", err)
+		// Return default preferences or handle error as needed
+	}
+	return prefs
+}
+
+func (s *Service) AddEvent(event types.Event) error {
+	err := s.eventRepo.AddEvent(event)
+	if err != nil {
+		s.logger.Error("Error adding event", "error", err)
+	}
+	return err
+}
+
+// SaveEvents saves the current list of events to the specified JSON file.
+func SaveEvents(filePath string) error {
+
+	//eventsLock.RLock()
+	//defer eventsLock.RUnlock()
+
+	data, err := json.MarshalIndent(allEvents, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// InitializeEvents loads holidays and attendance events without duplicates
+func initializeEvents(s *Service, holidaysPath string, eventsPath string) {
+	holidays, err := LoadHolidays(s, holidaysPath)
+	if err != nil {
+		s.logger.Error("Error loading holidays", "error", err)
+		allEvents = []types.Event{}
+		return
+	}
+
+	// Initialize a map to track unique events
+	eventMap := make(map[string]types.Event)
+
+	// Add holidays to the map
+	for _, h := range holidays {
+		key := h.Date.Format("2006-01-02") + "_" + h.Type
+		eventMap[key] = h
+	}
+
+	// Load attendance events from events.json
+	attendanceEvents, err := loadAttendanceEvents(s, eventsPath)
+	if err != nil {
+		s.logger.Error("Error loading attendance events:",
+			"error", err)
+		attendanceEvents = []types.Event{}
+	}
+
+	// Add attendance events to the map, avoiding duplicates
+	for _, a := range attendanceEvents {
+		key := a.Date.Format("2006-01-02") + "_" + a.Type
+		if _, exists := eventMap[key]; !exists {
+			eventMap[key] = a
+		} else {
+			s.logger.Info(
+				"Duplicate event found. Skipping.",
+				"date", a.Date.Format("2006-01-02"),
+				"type", a.Type,
+			)
+		}
+	}
+
+	// Convert the map back to a slice
+	allEvents = []types.Event{}
+	for _, e := range eventMap {
+		allEvents = append(allEvents, e)
+	}
+
+	s.logger.Info("Events Loaded", "len", len(allEvents))
+}
+
+// LoadAttendanceEvents loads attendance events from a JSON file
+func loadAttendanceEvents(s *Service, filePath string) ([]types.Event, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var rawEvents2 []struct {
+		Date        string `json:"date"`
+		Description string `json:"description"`
+		Type        string `json:"type"`
+		IsInOffice  bool   `json:"isInOffice"`
+	}
+
+	if err := json.Unmarshal(byteValue, &rawEvents2); err != nil {
+		return nil, err
+	}
+	// Ensure date parsing
+	var events []types.Event
+	for _, e := range rawEvents2 {
+
+		parsedDate, err := utils.ParseDate(e.Date)
+		if err != nil {
+			s.logger.Error(
+				"Invalid date format in events.json",
+				"event", e.Description,
+				"error", err)
+			continue
+		}
+
+		events = append(events, types.Event{
+			Date:        parsedDate,
+			Description: e.Description,
+			IsInOffice:  e.IsInOffice, // Holidays and vacations override attendance
+			Type:        e.Type,
+		})
+	}
+
+	return events, nil
+}
+
+// RawHoliday represents the structure of each holiday entry in the JSON file.
+type RawHoliday struct {
+	Date string `json:"date"`
+	Name string `json:"name"`
+	Type string `json:"type"` // e.g., "holiday", "vacation"
+}
+
+// LoadHolidays loads holidays and vacations from a JSON file
+func LoadHolidays(s *Service, filePath string) ([]types.Event, error) {
+
+	s.logger.Info("loading Holidays")
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var rawEvents []RawHoliday
+
+	if err := json.Unmarshal(byteValue, &rawEvents); err != nil {
+		return nil, err
+	}
+
+	events, processingErrors := processRawHolidays(s, rawEvents)
+
+	if len(processingErrors) > 0 {
+		s.logger.Error("Encountered errors while processing holidays.", "len", len(processingErrors))
+	}
+
+	return events, nil
+}
+
+// processRawHolidays converts raw holiday data into Event structs.
+// It returns a slice of Events and a slice of errors encountered during processing.
+func processRawHolidays(s *Service, rawEvents []RawHoliday) ([]types.Event, []error) {
+	events := []types.Event{}
+	errorsList := []error{}
+
+	for _, re := range rawEvents {
+		parsedDate, err := utils.ParseDate(re.Date)
+		if err != nil {
+			s.logger.Error("Invalid date format in holidays.json", "error", err)
+			errorsList = append(errorsList, err)
+			continue
+		}
+		events = append(events, types.Event{
+			Date:        parsedDate,
+			Description: re.Name,
+			IsInOffice:  false, // Holidays and vacations override attendance
+			Type:        re.Type,
+		})
+	}
+
+	return events, errorsList
+}
+
+func (s *Service) AddDefaultDays() error {
+	s.logger.Info("AddDefaultDays triggered")
+
+	// Get current preferences
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Failed to get preferences", "error", err)
+		return err
+	}
+
+	// Parse default days
+	defaultDays := strings.Split(prefs.DefaultDays, ",")
+	defaultDaysMap := make(map[string]bool)
+	for _, day := range defaultDays {
+		day = strings.TrimSpace(strings.ToLower(day))
+		defaultDaysMap[day] = true
+	}
+
+	// Define the date range
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+
+	// Retrieve existing events
+	existingEvents, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Failed to retrieve events", "error", err)
+		return err
+	}
+
+	// Create a map of existing event dates
+	existingEventDates := make(map[string]bool)
+	for _, event := range existingEvents {
+		dateStr := event.Date.Format("2006-01-02")
+		existingEventDates[dateStr] = true
+	}
+
+	// Add default attendance events
+	addedCount := 0
+	for d := startDate; !d.After(endDate); d = d.AddDate(0, 0, 1) {
+		// Map Go's Weekday to user's day abbreviations
+		var dayAbbrev string
+		switch d.Weekday() {
+		case time.Monday:
+			dayAbbrev = "M"
+		case time.Tuesday:
+			dayAbbrev = "T"
+		case time.Wednesday:
+			dayAbbrev = "W"
+		case time.Thursday:
+			dayAbbrev = "Th"
+		case time.Friday:
+			dayAbbrev = "F"
+		case time.Saturday:
+			dayAbbrev = "Sat"
+		case time.Sunday:
+			dayAbbrev = "Sun"
+		}
+		dayAbbrevLower := strings.ToLower(dayAbbrev)
+
+		// Skip weekends
+		if d.Weekday() == time.Saturday || d.Weekday() == time.Sunday {
+			continue
+		}
+
+		// Determine if it's a default in-office day
+		isInOffice := defaultDaysMap[dayAbbrevLower]
+
+		dateStr := d.Format("2006-01-02")
+		if !existingEventDates[dateStr] {
+			// Create a new attendance event
+			newEvent := types.Event{
+				Date:        d,
+				Description: "",
+				IsInOffice:  isInOffice,
+				Type:        "attendance",
+			}
+			err := s.eventRepo.AddEvent(newEvent)
+			if err != nil {
+				s.logger.Error("Failed to add event", "date", dateStr, "error", err)
+				continue
+			}
+			addedCount++
+		}
+	}
+
+	s.logger.Info("AddDefaultDays completed", "events_added", addedCount)
+	return nil
+}
+
+
+=== End of internal/domain/events.go ===
+
+package domain
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error {
+	//preferencesLock.Lock()
+	//defer s.preferencesLock.Unlock()
+
+	s.preferences.DefaultDays = defaultDays
+	s.preferences.TargetDays = targetDays
+
+	// Save preferences to JSON file
+	preferencesFilePath := "data/preferences.json"
+	if err := s.SavePreferences(preferencesFilePath); err != nil {
+		s.logger.Error("Error saving preferences", "error", err)
+		return err
+	}
+	return nil
+}
+
+func (s *Service) SavePreferences(filePath string) error {
+	//s.preferencesLock.RLock()
+	//defer s.preferencesLock.RUnlock()
+
+	data, err := json.MarshalIndent(s.preferences, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// InitializePreferences initializes preferences by loading the JSON file
+func initializePreferences(s *Service, filePath string) types.Preferences {
+	prefs, err := loadPreferences(s, filePath)
+	if err != nil {
+		s.logger.Error("Error loading preferences", "error", err)
+
+		// Set default preferences if loading fails
+
+		return types.Preferences{
+			DefaultDays: "T,W,Th,F", // Default to Tuesday, Wednesday, Thursday, Friday
+			TargetDays:  "2.5",
+		}
+
+	} else {
+		s.logger.Info("Preferences loaded successfully.")
+		return prefs
+	}
+}
+
+// LoadPreferences loads preferences from a JSON file
+func loadPreferences(s *Service, filePath string) (types.Preferences, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return types.Preferences{}, err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		return types.Preferences{}, err
+	}
+
+	var prefs types.Preferences
+	if err := json.Unmarshal(byteValue, &prefs); err != nil {
+		return types.Preferences{}, err
+	}
+
+	s.preferences = prefs
+
+	return types.Preferences{}, err
+}
+
+
+=== End of internal/domain/preferences.go ===
+
+package domain
+
+import (
+	"errors"
+	"strconv"
+	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+)
+
+func (s *Service) ToggleAttendance(eventDate time.Time) (string, error) {
+	// Retrieve all events
+	events, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error retrieving events", "error", err)
+		return "", err
+	}
+
+	// Find the attendance event on the given date
+	found := false
+	var newStatus string
+	var eventToUpdate types.Event
+
+	for _, event := range events {
+		if utils.SameDay(event.Date, eventDate) && event.Type == "attendance" {
+			// Toggle the IsInOffice flag
+			event.IsInOffice = !event.IsInOffice
+			eventToUpdate = event
+			if event.IsInOffice {
+				newStatus = "in"
+			} else {
+				newStatus = "remote"
+			}
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return "", errors.New("attendance event not found on the specified date")
+	}
+
+	// Update the event in the database
+	err = s.eventRepo.UpdateEvent(eventToUpdate)
+	if err != nil {
+		s.logger.Error("Error updating event", "error", err)
+		return "", err
+	}
+
+	return newStatus, nil
+}
+
+// CalculateAttendanceStats calculates all the stats
+func (s *Service) CalculateAttendanceStats() (*types.AttendanceStats, error) {
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+
+	allTheEvents, err := s.eventRepo.GetAllEvents()
+	if err != nil {
+		s.logger.Error("Error fetching  events", "error", err)
+		return nil, err
+	}
+	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allTheEvents, startDate, endDate)
+
+	average := 0.0
+	averageDays := 0.0
+	if totalDays > 0 {
+		average = (float64(inOfficeCount) / float64(totalDays)) * 100
+		averageDays = (float64(inOfficeCount) / float64(totalDays)) * 7 // Average days/week
+	}
+
+	// Fetch targetDays from preferences
+	targetDaysStr := s.preferences.TargetDays
+	targetDays, err := strconv.ParseFloat(targetDaysStr, 64)
+	if err != nil {
+		// Fallback to default target if parsing fails
+		targetDays = 2.5
+	}
+
+	return &types.AttendanceStats{
+		InOfficeCount: inOfficeCount,
+		TotalDays:     totalDays,
+		Average:       average,
+		AverageDays:   averageDays,
+		TargetDays:    targetDays,
+	}, nil
+}
+
+
+=== End of internal/domain/toggle.go ===
+
+package utils
+
+import (
+	"errors"
+	"time"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+// parseDate tries to parse a date string using multiple layouts.
+// It returns the parsed time.Time or an error if none of the layouts match.
+func ParseDate(dateStr string) (time.Time, error) {
+	layouts := []string{
+		"2006-01-02",          // "YYYY-MM-DD"
+		time.RFC3339,          // "YYYY-MM-DDTHH:MM:SSZ"
+		"2006-01-02T15:04:05", // "YYYY-MM-DDTHH:MM:SS"
+	}
+
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, dateStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, errors.New("invalid date format")
+}
+
+// SameDay checks if two dates are on the same calendar day
+func SameDay(a, b time.Time) bool {
+	yearA, monthA, dayA := a.Date()
+	yearB, monthB, dayB := b.Date()
+	return yearA == yearB && monthA == monthB && dayA == dayB
+}
+
+// CalculateInOfficeAverage computes the number of in-office days and total days in the quarter
+func CalculateInOfficeAverage(events []types.Event, startDate time.Time, endDate time.Time) (int, int) {
+	// Define the quarter date range: October 1 to December 31 of the current year
+
+	// Calculate total days in the quarter
+	totalDays := int(endDate.Sub(startDate).Hours()/24) + 1 // +1 to include the end date
+
+	inOfficeCount := 0
+
+	// Iterate through all events and count in-office days within the quarter
+	for _, event := range events {
+		if event.Type == "attendance" && event.IsInOffice {
+			if !event.Date.Before(startDate) && !event.Date.After(endDate) {
+				inOfficeCount++
+			}
+		}
+	}
+
+	return inOfficeCount, totalDays
+}
+
+// GetCalendarMonth generates all weeks for the given month, including days from adjacent months
+func GetCalendarMonth(currentDate time.Time) [][]types.CalendarDay {
+	var weeks [][]types.CalendarDay
+
+	// Normalize to the first day of the month
+	firstOfMonth := time.Date(currentDate.Year(), currentDate.Month(), 1, 0, 0, 0, 0, currentDate.Location())
+
+	// Find the first Sunday before or on the first day of the month
+	weekday := firstOfMonth.Weekday()
+	daysToSubtract := int(weekday) // Sunday = 0
+	startDate := firstOfMonth.AddDate(0, 0, -daysToSubtract)
+
+	for week := 0; week < 6; week++ { // Up to 6 weeks in a month view
+		var weekDays []types.CalendarDay
+		for day := 0; day < 7; day++ {
+			currentDay := startDate.AddDate(0, 0, week*7+day)
+			inMonth := currentDay.Month() == firstOfMonth.Month()
+			weekDays = append(weekDays, types.CalendarDay{
+				Date:    currentDay,
+				InMonth: inMonth,
+			})
+		}
+		weeks = append(weeks, weekDays)
+
+		// Check if all days in the current week are from the next month
+		allDaysNextMonth := true
+		for _, day := range weekDays {
+			if day.Date.Month() == firstOfMonth.Month() {
+				allDaysNextMonth = false
+				break
+			}
+		}
+
+		if allDaysNextMonth {
+			weeks = weeks[:len(weeks)-1] // Remove the last week added
+			break
+		}
+	}
+
+	return weeks
+}
+
+
+=== End of internal/utils/utils.go ===
+
