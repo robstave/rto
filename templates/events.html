@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Events List - RTO Attendance Tracker</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Optional: Include Font Awesome for toggle icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <h1 style="text-align: center;">List of Events</h1>
@@ -13,14 +16,28 @@
         <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
     </div>
 
+    <!-- Toggle Switch for Filtering Attendance Events -->
+    <div class="toggle-container">
+        <label class="toggle-switch">
+            <input type="checkbox" id="filterAttendance" checked>
+            <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Show Attendance Events</span>
+    </div>
+
     <!-- Events List -->
     <div class="events-list" style="max-width: 800px; margin: 0 auto;">
         {{if .Events}}
-            <ul style="list-style-type: none; padding: 0;">
+            <ul style="list-style-type: none; padding: 0;" id="eventsList">
                 {{range .Events}}
-                    <li style="padding: 10px; border-bottom: 1px solid #ddd;">
+                    <li class="event-item" data-type="{{.Type}}" style="padding: 10px; border-bottom: 1px solid #ddd;">
                         <strong>{{.Date.Format "January 2, 2006"}}</strong> - 
-                        <span>{{if eq .Type "holiday"}}Holiday: {{.Description}}{{else if eq .Type "vacation"}}Vacation: {{.Description}}{{else if eq .Type "attendance"}}{{if .IsInOffice}}In Office{{else}}Remote{{end}}{{end}}</span>
+                        <span>
+                            {{if eq .Type "holiday"}}Holiday: {{.Description}}
+                            {{else if eq .Type "vacation"}}Vacation: {{.Description}}
+                            {{else if eq .Type "attendance"}}{{if .IsInOffice}}In Office{{else}}Remote{{end}}
+                            {{end}}
+                        </span>
                     </li>
                 {{end}}
             </ul>
@@ -28,5 +45,43 @@
             <p style="text-align: center;">No events to display.</p>
         {{end}}
     </div>
+
+    <!-- JavaScript for Filtering Events -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#filterAttendance').on('change', function () {
+                var isChecked = $(this).is(':checked');
+
+                if (isChecked) {
+                    // Show all events
+                    $('.event-item').show();
+                } else {
+                    // Hide attendance events
+                    $('.event-item').each(function () {
+                        var eventType = $(this).data('type');
+                        if (eventType === 'attendance') {
+                            $(this).hide();
+                        } else {
+                            $(this).show();
+                        }
+                    });
+                }
+            });
+
+            // Optional: Preserve toggle state using localStorage
+            // Retrieve state on page load
+            var toggleState = localStorage.getItem('filterAttendance');
+            if (toggleState !== null) {
+                $('#filterAttendance').prop('checked', toggleState === 'true').trigger('change');
+            }
+
+            // Save state on toggle
+            $('#filterAttendance').on('change', function () {
+                var isChecked = $(this).is(':checked');
+                localStorage.setItem('filterAttendance', isChecked);
+            });
+        });
+    </script>
 </body>
 </html>
