@@ -20,6 +20,8 @@ type RTOBLL interface {
 	CalculateAttendanceStats() (*types.AttendanceStats, error)
 	UpdatePreferences(defaultDays string, targetDays string) error
 	AddDefaultDays() error
+	DeleteEvent(eventID int) error
+	GetEventByID(eventID int) (types.Event, error)
 }
 
 // Global variable to store all events and manage thread safety.

@@ -1,0 +1,33 @@
+# Binaries
+rto-attendance-tracker
+
+# Test files
+*.test
+*.out
+
+# Logs
+logs/
+*.log
+
+# Dependency directories
+vendor/
+Godeps/
+
+# IDE and editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Git files
+.git/
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml

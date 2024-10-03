@@ -27,6 +27,11 @@ func NewRTOController(
 
 ) *RTOController {
 
+	// Read DB_PATH from environment variable, set a default if not provided
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/db.sqlite3" // Default path
+	}
 	logger.Info("creating Database")
 	db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
 	if err != nil {

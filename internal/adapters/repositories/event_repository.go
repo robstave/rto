@@ -12,6 +12,7 @@ type EventRepository interface {
 	UpdateEvent(event types.Event) error
 	DeleteEvent(eventID int) error
 	GetEventByDate(date time.Time) (types.Event, error)
+	GetEventByID(eventID int) (types.Event, error) // New method
 	// Add other methods as needed
 }
 

@@ -1,0 +1,21 @@
+version: '3.8'  # Specify the Docker Compose version
+
+services:
+  app:
+    build:
+      context: .  # Build context set to the current directory
+      dockerfile: Dockerfile
+    container_name: rto-attendance-app
+    ports:
+      - "8080:8080"  # Map host port 8080 to container port 8080
+    volumes:
+      - db-data:/app/data  # Mount the 'db-data' volume to /app/data in the container
+      - ./static:/app/static  # Optional: Mount static files for development
+      - ./templates:/app/templates  # Optional: Mount templates for development
+    environment:
+      - DB_PATH=/app/data/db.sqlite3  # Ensure your app uses this environment variable for the DB path
+    restart: unless-stopped  # Automatically restart the container unless it is explicitly stopped
+
+volumes:
+  db-data:
+    driver: local

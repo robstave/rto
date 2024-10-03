@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <title>Events List - RTO Attendance Tracker</title>
     <link rel="stylesheet" href="/static/css/styles.css">
-    <!-- Optional: Include Font Awesome for toggle icons -->
+    <!-- Optional: Include Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Include jQuery (ensure it's loaded) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <h1 style="text-align: center;">List of Events</h1>
@@ -30,14 +32,22 @@
         {{if .Events}}
             <ul style="list-style-type: none; padding: 0;" id="eventsList">
                 {{range .Events}}
-                    <li class="event-item" data-type="{{.Type}}" style="padding: 10px; border-bottom: 1px solid #ddd;">
-                        <strong>{{.Date.Format "January 2, 2006"}}</strong> - 
-                        <span>
-                            {{if eq .Type "holiday"}}Holiday: {{.Description}}
-                            {{else if eq .Type "vacation"}}Vacation: {{.Description}}
-                            {{else if eq .Type "attendance"}}{{if .IsInOffice}}In Office{{else}}Remote{{end}}
-                            {{end}}
-                        </span>
+                    <li class="event-item" data-type="{{.Type}}" style="padding: 8px 10px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="width: 100px; display: inline-block;">{{.Date.Format "Jan 2, 2006"}}</strong> - 
+                            <span>
+                                {{if eq .Type "holiday"}}<span  >{{.Description}}</span>
+                                {{else if eq .Type "vacation"}}<span  >{{.Description}}</span>
+                                {{else if eq .Type "attendance"}}<span>{{if .IsInOffice}}In Office{{else}}Remote{{end}}</span>
+                                {{end}}
+                            </span>
+                        </div>
+                        <!-- Delete Button for Vacations -->
+                        {{if eq .Type "vacation"}}
+                            <button class="delete-button" data-id="{{.ID}}" title="Delete Vacation">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        {{end}}
                     </li>
                 {{end}}
             </ul>
@@ -46,10 +56,10 @@
         {{end}}
     </div>
 
-    <!-- JavaScript for Filtering Events -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JavaScript for Filtering and Deleting Events -->
     <script>
         $(document).ready(function () {
+            // Handle toggle for filtering attendance events
             $('#filterAttendance').on('change', function () {
                 var isChecked = $(this).is(':checked');
 
@@ -70,16 +80,44 @@
             });
 
             // Optional: Preserve toggle state using localStorage
-            // Retrieve state on page load
             var toggleState = localStorage.getItem('filterAttendance');
             if (toggleState !== null) {
                 $('#filterAttendance').prop('checked', toggleState === 'true').trigger('change');
             }
 
-            // Save state on toggle
             $('#filterAttendance').on('change', function () {
                 var isChecked = $(this).is(':checked');
                 localStorage.setItem('filterAttendance', isChecked);
+            });
+
+            // Handle delete button click
+            $('.delete-button').on('click', function () {
+                var button = $(this);
+                var eventId = button.data('id');
+
+                if (confirm('Are you sure you want to delete this vacation event?')) {
+                    // Send AJAX request to delete the event
+                    $.ajax({
+                        url: '/events/delete/' + eventId,
+                        method: 'DELETE',
+                        success: function (response) {
+                            if (response.success) {
+                                // Remove the event item from the list
+                                button.closest('.event-item').fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                                // Optionally, display a success message
+                                toastr.success('Vacation event deleted successfully.');
+                            } else {
+                                // Optionally, display an error message
+                                toastr.error('Failed to delete the vacation event.');
+                            }
+                        },
+                        error: function () {
+                            toastr.error('An error occurred while deleting the event.');
+                        }
+                    });
+                }
             });
         });
     </script>

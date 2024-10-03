@@ -301,11 +301,14 @@ p {
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 0.75em;
-    color: #fff;
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: inline-block; /* Ensures the background color wraps the text */
 }
+
+ 
 
 .event-holiday {
     background-color: var(--color-holiday);
@@ -562,4 +565,63 @@ input:checked + .slider:before {
     max-height: 0;
     padding: 0;
     border: none;
+}
+
+/* Events List Styles */
+.events-list ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.event-item {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s ease;
+}
+
+.event-item:hover {
+    background-color: var(--color-hover);
+}
+
+.event-item span {
+    display: inline-block;
+}
+
+/* Fixed width for the date */
+.event-item strong {
+    width: 100px;
+    display: inline-block;
+}
+
+/* Delete Button Styles */
+.delete-button {
+    background: none;
+    border: none;
+    color: #f44336; /* Red color */
+    cursor: pointer;
+    font-size: 1em;
+    padding: 4px;
+    transition: color 0.3s ease;
+}
+
+.delete-button:hover {
+    color: #d32f2f; /* Darker red on hover */
+}
+
+.delete-button:focus {
+    outline: none;
+}
+
+ 
+
+/* Toastr Overrides (Optional for better visibility) */
+.toastr-success {
+    background-color: #4CAF50 !important;
+}
+
+.toastr-error {
+    background-color: #F44336 !important;
 }

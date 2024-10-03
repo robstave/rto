@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"time"
 
@@ -297,5 +298,37 @@ func (s *Service) AddDefaultDays() error {
 	}
 
 	s.logger.Info("AddDefaultDays completed", "events_added", addedCount)
+	return nil
+}
+
+// GetEventByID retrieves a single event by its ID
+func (s *Service) GetEventByID(eventID int) (types.Event, error) {
+	event, err := s.eventRepo.GetEventByID(eventID)
+	if err != nil {
+		s.logger.Error("Error fetching event by ID", "error", err)
+		return types.Event{}, err
+	}
+	return event, nil
+}
+
+// DeleteEvent deletes an event by its ID
+func (s *Service) DeleteEvent(eventID int) error {
+	// First, retrieve the event to ensure it exists and is deletable
+	event, err := s.GetEventByID(eventID)
+	if err != nil {
+		return err
+	}
+
+	if event.Type != "vacation" {
+		return errors.New("only vacation events can be deleted")
+	}
+
+	// Proceed to delete the event
+	err = s.eventRepo.DeleteEvent(eventID)
+	if err != nil {
+		s.logger.Error("Error deleting event", "error", err)
+		return err
+	}
+
 	return nil
 }

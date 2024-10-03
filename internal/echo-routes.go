@@ -32,6 +32,7 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 
 	// Register the new route for adding default days
 	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
+	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
 
 	return e
 }

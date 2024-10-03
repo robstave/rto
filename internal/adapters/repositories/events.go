@@ -8,7 +8,7 @@ import (
 
 func (r *EventRepositorySQLite) GetAllEvents() ([]types.Event, error) {
 	var events []types.Event
-	result := r.db.Find(&events)
+	result := r.db.Order("date ASC").Find(&events)
 	return events, result.Error
 }
 
@@ -30,5 +30,11 @@ func (r *EventRepositorySQLite) DeleteEvent(eventID int) error {
 func (r *EventRepositorySQLite) GetEventByDate(date time.Time) (types.Event, error) {
 	var event types.Event
 	result := r.db.Where("date = ?", date).First(&event)
+	return event, result.Error
+}
+
+func (r *EventRepositorySQLite) GetEventByID(eventID int) (types.Event, error) {
+	var event types.Event
+	result := r.db.First(&event, eventID)
 	return event, result.Error
 }
