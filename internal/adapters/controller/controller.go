@@ -23,15 +23,13 @@ type RTOController struct {
 }
 
 func NewRTOController(
+	dbPath string,
 	logger *slog.Logger,
 
 ) *RTOController {
 
 	// Read DB_PATH from environment variable, set a default if not provided
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "./data/db.sqlite3" // Default path
-	}
+
 	logger.Info("creating Database")
 	db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
 	if err != nil {
@@ -71,7 +69,7 @@ func NewRTOController(
 	return &RTOController{service, logger}
 }
 
-func NewRTOControllerWithMock(service domain.RTOBLL) *RTOController {
+func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL) *RTOController {
 	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
 }
 

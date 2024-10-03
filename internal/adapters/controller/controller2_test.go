@@ -53,7 +53,7 @@ func TestEventsList(t *testing.T) {
 	mockService.On("GetAllEvents").Return(mockEvents)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock(mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService)
 
 	// Create a request
 	req := httptest.NewRequest(http.MethodGet, "/events", nil)

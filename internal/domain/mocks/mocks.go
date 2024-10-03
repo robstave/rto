@@ -26,8 +26,16 @@ func (m *MockRTOBLL) ToggleAttendance(eventDate time.Time) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
+func (m *MockRTOBLL) GetEventByID(eventID int) (types.Event, error) {
+	args := m.Called(eventID)
+	return args.Get(0).(types.Event), args.Error(1)
+}
 func (m *MockRTOBLL) AddEvent(event types.Event) error {
 	args := m.Called(event)
+	return args.Error(0)
+}
+func (m *MockRTOBLL) DeleteEvent(eventID int) error {
+	args := m.Called(eventID)
 	return args.Error(0)
 }
 

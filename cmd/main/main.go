@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -27,9 +28,15 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 func main() {
 
+	// Read DB_PATH from environment variable, set a default if not provided
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/db.sqlite3" // Default path
+	}
+
 	slogger := logger.InitializeLogger()
 	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
-	rtoClt := controller.NewRTOController(slogger)
+	rtoClt := controller.NewRTOController(dbPath, slogger)
 
 	e := api.GetEcho(rtoClt)
 	mw := slogecho.New(slogger)
