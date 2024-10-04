@@ -2,7 +2,6 @@ package domain
 
 import (
 	"log/slog"
-	"sync"
 	"time"
 
 	repository "github.com/robstave/rto/internal/adapters/repositories"
@@ -22,13 +21,6 @@ type RTOBLL interface {
 	DeleteEvent(eventID int) error
 	GetEventByID(eventID int) (types.Event, error)
 }
-
-// Global variable to store all events and manage thread safety.
-// Ideally this is in the service.  but lets park it here for now
-var (
-	allEvents  []types.Event
-	eventsLock sync.RWMutex
-)
 
 type Service struct {
 	preferences    types.Preferences
@@ -50,9 +42,6 @@ func NewService(
 	}
 
 	service.preferences = initializePreferences(&service)
-	//holidaysPath := filepath.Join("app", "service", "holidays.json")
-	//eventsPath := filepath.Join("data", "events.json")
-	//initializeEvents(&service, holidaysPath, eventsPath)
 
 	return &service
 }
