@@ -2,7 +2,6 @@ package domain
 
 import (
 	"log/slog"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -51,9 +50,9 @@ func NewService(
 	}
 
 	service.preferences = initializePreferences(&service)
-	holidaysPath := filepath.Join("data", "holidays.json")
-	eventsPath := filepath.Join("data", "events.json")
-	initializeEvents(&service, holidaysPath, eventsPath)
+	//holidaysPath := filepath.Join("app", "service", "holidays.json")
+	//eventsPath := filepath.Join("data", "events.json")
+	//initializeEvents(&service, holidaysPath, eventsPath)
 
 	return &service
 }

@@ -30,8 +30,11 @@ func NewRTOController(
 
 	// Read DB_PATH from environment variable, set a default if not provided
 
-	logger.Info("creating Database")
-	db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
+	//db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
+	//dbPath = dbPath + "/rto_attendance.db"
+	logger.Info("creating Database", "db", dbPath)
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+
 	if err != nil {
 		logger.Error("Failed to connect to database", "error", err)
 		panic("Failed to connect to database")
@@ -75,7 +78,7 @@ func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL) *RTOControll
 
 func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
 	// Load holidays from JSON file
-	holidaysPath := filepath.Join("data", "holidays.json")
+	holidaysPath := filepath.Join("static", "holidays.json")
 	file, err := os.Open(holidaysPath)
 	if err != nil {
 		logger.Error("Failed to open holidays.json", "error", err)

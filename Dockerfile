@@ -1,8 +1,12 @@
-# Stage 1: Build the Go application
+# Stage 1: Build the Go application with cgo enabled
 FROM golang:1.23-alpine AS builder
 
-# Install git (required for some Go modules)
-RUN apk update && apk add --no-cache git
+# Install necessary build tools for cgo
+RUN apk add --no-cache git gcc musl-dev
+
+# Set build arguments
+ARG CACHEBUST=1
+ENV CGO_ENABLED=1 GOOS=linux GOARCH=amd64
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -10,21 +14,22 @@ WORKDIR /app
 # Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+# Download all dependencies
 RUN go mod download
 
 # Copy the source code
 COPY . .
 
 # Build the Go app
-# Replace 'main.go' with the entry point of your application if different
-RUN go build -o rto-attendance-tracker main.go
+RUN go build -o rto-attendance-tracker cmd/main/main.go
 
-# Stage 2: Create a minimal image with the built binary
+# Stage 2: Create a minimal runtime image
 FROM alpine:latest
 
-# Install necessary packages (e.g., certificates for HTTPS)
-RUN apk update && apk add --no-cache ca-certificates && rm -rf /var/cache/apk/*
+# Install necessary runtime packages
+RUN apk add --no-cache \
+    ca-certificates \
+    sqlite-libs
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -40,11 +45,21 @@ COPY --from=builder /app/templates ./templates
 RUN mkdir -p /app/data
 
 # Expose the port the app runs on
-# Replace '8080' with your application's port if different
 EXPOSE 8080
 
-# Define environment variables if needed
-# ENV DB_PATH=/app/data/db.sqlite3
+# Define environment variables
+ENV DB_PATH=/app/data/db.sqlite3
+
+COPY --from=builder /app/static ./static
+
+# Add a non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Change ownership of the app directory
+RUN chown -R appuser:appgroup /app
+
+# Switch to the non-root user
+USER appuser
 
 # Set the entrypoint to run the binary
 ENTRYPOINT ["./rto-attendance-tracker"]
