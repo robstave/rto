@@ -301,11 +301,14 @@ p {
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 0.75em;
-    color: #fff;
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: inline-block; /* Ensures the background color wraps the text */
 }
+
+ 
 
 .event-holiday {
     background-color: var(--color-holiday);
@@ -485,6 +488,144 @@ button:hover {
     font-size: 14px;
     color: var(--color-text);
 }
+
+
+/* Toggle Switch Styles */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-right: 10px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--color-in-office);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--color-in-office);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Label Styles */
+.toggle-label {
+    font-size: 1em;
+    color: var(--color-text);
+}
+
+
+.event-item {
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.event-item.hide {
+    opacity: 0;
+    max-height: 0;
+    padding: 0;
+    border: none;
+}
+
+/* Events List Styles */
+.events-list ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.event-item {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s ease;
+}
+
+.event-item:hover {
+    background-color: var(--color-hover);
+}
+
+.event-item span {
+    display: inline-block;
+}
+
+/* Fixed width for the date */
+.event-item strong {
+    width: 100px;
+    display: inline-block;
+}
+
+/* Delete Button Styles */
+.delete-button {
+    background: none;
+    border: none;
+    color: #f44336; /* Red color */
+    cursor: pointer;
+    font-size: 1em;
+    padding: 4px;
+    transition: color 0.3s ease;
+}
+
+.delete-button:hover {
+    color: #d32f2f; /* Darker red on hover */
+}
+
+.delete-button:focus {
+    outline: none;
+}
+
+ 
+
+/* Toastr Overrides (Optional for better visibility) */
+.toastr-success {
+    background-color: #4CAF50 !important;
+}
+
+.toastr-error {
+    background-color: #F44336 !important;
+}
+
 
 === End of static/css/styles.css ===
 
@@ -766,6 +907,11 @@ button:hover {
     <meta charset="UTF-8">
     <title>Events List - RTO Attendance Tracker</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Optional: Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Include jQuery (ensure it's loaded) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <h1 style="text-align: center;">List of Events</h1>
@@ -775,14 +921,36 @@ button:hover {
         <button onclick="window.location.href='/'" style="padding: 10px 20px;">Back to Calendar</button>
     </div>
 
+    <!-- Toggle Switch for Filtering Attendance Events -->
+    <div class="toggle-container">
+        <label class="toggle-switch">
+            <input type="checkbox" id="filterAttendance" checked>
+            <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Show Attendance Events</span>
+    </div>
+
     <!-- Events List -->
     <div class="events-list" style="max-width: 800px; margin: 0 auto;">
         {{if .Events}}
-            <ul style="list-style-type: none; padding: 0;">
+            <ul style="list-style-type: none; padding: 0;" id="eventsList">
                 {{range .Events}}
-                    <li style="padding: 10px; border-bottom: 1px solid #ddd;">
-                        <strong>{{.Date.Format "January 2, 2006"}}</strong> - 
-                        <span>{{if eq .Type "holiday"}}Holiday: {{.Description}}{{else if eq .Type "vacation"}}Vacation: {{.Description}}{{else if eq .Type "attendance"}}{{if .IsInOffice}}In Office{{else}}Remote{{end}}{{end}}</span>
+                    <li class="event-item" data-type="{{.Type}}" style="padding: 8px 10px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="width: 100px; display: inline-block;">{{.Date.Format "Jan 2, 2006"}}</strong> - 
+                            <span>
+                                {{if eq .Type "holiday"}}<span  >{{.Description}}</span>
+                                {{else if eq .Type "vacation"}}<span  >{{.Description}}</span>
+                                {{else if eq .Type "attendance"}}<span>{{if .IsInOffice}}In Office{{else}}Remote{{end}}</span>
+                                {{end}}
+                            </span>
+                        </div>
+                        <!-- Delete Button for Vacations -->
+                        {{if eq .Type "vacation"}}
+                            <button class="delete-button" data-id="{{.ID}}" title="Delete Vacation">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        {{end}}
                     </li>
                 {{end}}
             </ul>
@@ -790,6 +958,72 @@ button:hover {
             <p style="text-align: center;">No events to display.</p>
         {{end}}
     </div>
+
+    <!-- JavaScript for Filtering and Deleting Events -->
+    <script>
+        $(document).ready(function () {
+            // Handle toggle for filtering attendance events
+            $('#filterAttendance').on('change', function () {
+                var isChecked = $(this).is(':checked');
+
+                if (isChecked) {
+                    // Show all events
+                    $('.event-item').show();
+                } else {
+                    // Hide attendance events
+                    $('.event-item').each(function () {
+                        var eventType = $(this).data('type');
+                        if (eventType === 'attendance') {
+                            $(this).hide();
+                        } else {
+                            $(this).show();
+                        }
+                    });
+                }
+            });
+
+            // Optional: Preserve toggle state using localStorage
+            var toggleState = localStorage.getItem('filterAttendance');
+            if (toggleState !== null) {
+                $('#filterAttendance').prop('checked', toggleState === 'true').trigger('change');
+            }
+
+            $('#filterAttendance').on('change', function () {
+                var isChecked = $(this).is(':checked');
+                localStorage.setItem('filterAttendance', isChecked);
+            });
+
+            // Handle delete button click
+            $('.delete-button').on('click', function () {
+                var button = $(this);
+                var eventId = button.data('id');
+
+                if (confirm('Are you sure you want to delete this vacation event?')) {
+                    // Send AJAX request to delete the event
+                    $.ajax({
+                        url: '/events/delete/' + eventId,
+                        method: 'DELETE',
+                        success: function (response) {
+                            if (response.success) {
+                                // Remove the event item from the list
+                                button.closest('.event-item').fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                                // Optionally, display a success message
+                                toastr.success('Vacation event deleted successfully.');
+                            } else {
+                                // Optionally, display an error message
+                                toastr.error('Failed to delete the vacation event.');
+                            }
+                        },
+                        error: function () {
+                            toastr.error('An error occurred while deleting the event.');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 

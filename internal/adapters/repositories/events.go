@@ -38,3 +38,15 @@ func (r *EventRepositorySQLite) GetEventByID(eventID int) (types.Event, error) {
 	result := r.db.First(&event, eventID)
 	return event, result.Error
 }
+
+func (r *EventRepositorySQLite) GetEventsByType(eventType string) ([]types.Event, error) {
+	var events []types.Event
+	result := r.db.Where("type = ?", eventType).Order("date ASC").Find(&events)
+	return events, result.Error
+}
+
+func (r *EventRepositorySQLite) GetEventByDateAndType(date time.Time, eventType string) (types.Event, error) {
+	var event types.Event
+	result := r.db.Where("date = ? AND type = ?", date, eventType).First(&event)
+	return event, result.Error
+}

@@ -34,5 +34,8 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
 	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
 
+	// **New Route for Exporting Events as Markdown**
+	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
+
 	return e
 }

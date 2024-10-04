@@ -596,7 +596,7 @@ input:checked + .slider:before {
     display: inline-block;
 }
 
-/* Delete Button Styles */
+/* Optional: Style for delete buttons */
 .delete-button {
     background: none;
     border: none;

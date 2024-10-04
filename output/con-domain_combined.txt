@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -27,9 +28,15 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 func main() {
 
+	// Read DB_PATH from environment variable, set a default if not provided
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/db.sqlite3" // Default path
+	}
+
 	slogger := logger.InitializeLogger()
 	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
-	rtoClt := controller.NewRTOController(slogger)
+	rtoClt := controller.NewRTOController(dbPath, slogger)
 
 	e := api.GetEcho(rtoClt)
 	mw := slogecho.New(slogger)
@@ -94,6 +101,7 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 
 	// Register the new route for adding default days
 	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
+	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
 
 	return e
 }
@@ -146,8 +154,6 @@ package domain
 
 import (
 	"log/slog"
-	"path/filepath"
-	"sync"
 	"time"
 
 	repository "github.com/robstave/rto/internal/adapters/repositories"
@@ -164,14 +170,9 @@ type RTOBLL interface {
 	CalculateAttendanceStats() (*types.AttendanceStats, error)
 	UpdatePreferences(defaultDays string, targetDays string) error
 	AddDefaultDays() error
+	DeleteEvent(eventID int) error
+	GetEventByID(eventID int) (types.Event, error)
 }
-
-// Global variable to store all events and manage thread safety.
-// Ideally this is in the service.  but lets park it here for now
-var (
-	allEvents  []types.Event
-	eventsLock sync.RWMutex
-)
 
 type Service struct {
 	preferences    types.Preferences
@@ -192,11 +193,7 @@ func NewService(
 		preferenceRepo: preferenceRepo,
 	}
 
-	preferencesPath := filepath.Join("data", "preferences.json")
-	service.preferences = initializePreferences(&service, preferencesPath)
-	holidaysPath := filepath.Join("data", "holidays.json")
-	eventsPath := filepath.Join("data", "events.json")
-	initializeEvents(&service, holidaysPath, eventsPath)
+	service.preferences = initializePreferences(&service)
 
 	return &service
 }
@@ -207,15 +204,12 @@ func NewService(
 package domain
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"errors"
 	"time"
 
-	"os"
 	"strings"
 
 	"github.com/robstave/rto/internal/domain/types"
-	"github.com/robstave/rto/internal/utils"
 )
 
 func (s *Service) GetAllEvents() []types.Event {
@@ -241,179 +235,6 @@ func (s *Service) AddEvent(event types.Event) error {
 		s.logger.Error("Error adding event", "error", err)
 	}
 	return err
-}
-
-// SaveEvents saves the current list of events to the specified JSON file.
-func SaveEvents(filePath string) error {
-
-	data, err := json.MarshalIndent(allEvents, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filePath, data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// InitializeEvents loads holidays and attendance events without duplicates
-func initializeEvents(s *Service, holidaysPath string, eventsPath string) {
-	holidays, err := LoadHolidays(s, holidaysPath)
-	if err != nil {
-		s.logger.Error("Error loading holidays", "error", err)
-		allEvents = []types.Event{}
-		return
-	}
-
-	// Initialize a map to track unique events
-	eventMap := make(map[string]types.Event)
-
-	// Add holidays to the map
-	for _, h := range holidays {
-		key := h.Date.Format("2006-01-02") + "_" + h.Type
-		eventMap[key] = h
-	}
-
-	// Load attendance events from events.json
-	attendanceEvents, err := loadAttendanceEvents(s, eventsPath)
-	if err != nil {
-		s.logger.Error("Error loading attendance events:",
-			"error", err)
-		attendanceEvents = []types.Event{}
-	}
-
-	// Add attendance events to the map, avoiding duplicates
-	for _, a := range attendanceEvents {
-		key := a.Date.Format("2006-01-02") + "_" + a.Type
-		if _, exists := eventMap[key]; !exists {
-			eventMap[key] = a
-		} else {
-			s.logger.Info(
-				"Duplicate event found. Skipping.",
-				"date", a.Date.Format("2006-01-02"),
-				"type", a.Type,
-			)
-		}
-	}
-
-	// Convert the map back to a slice
-	allEvents = []types.Event{}
-	for _, e := range eventMap {
-		allEvents = append(allEvents, e)
-	}
-
-	s.logger.Info("Events Loaded", "len", len(allEvents))
-}
-
-// LoadAttendanceEvents loads attendance events from a JSON file
-func loadAttendanceEvents(s *Service, filePath string) ([]types.Event, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	var rawEvents2 []struct {
-		Date        string `json:"date"`
-		Description string `json:"description"`
-		Type        string `json:"type"`
-		IsInOffice  bool   `json:"isInOffice"`
-	}
-
-	if err := json.Unmarshal(byteValue, &rawEvents2); err != nil {
-		return nil, err
-	}
-	// Ensure date parsing
-	var events []types.Event
-	for _, e := range rawEvents2 {
-
-		parsedDate, err := utils.ParseDate(e.Date)
-		if err != nil {
-			s.logger.Error(
-				"Invalid date format in events.json",
-				"event", e.Description,
-				"error", err)
-			continue
-		}
-
-		events = append(events, types.Event{
-			Date:        parsedDate,
-			Description: e.Description,
-			IsInOffice:  e.IsInOffice, // Holidays and vacations override attendance
-			Type:        e.Type,
-		})
-	}
-
-	return events, nil
-}
-
-// RawHoliday represents the structure of each holiday entry in the JSON file.
-type RawHoliday struct {
-	Date string `json:"date"`
-	Name string `json:"name"`
-	Type string `json:"type"` // e.g., "holiday", "vacation"
-}
-
-// LoadHolidays loads holidays and vacations from a JSON file
-func LoadHolidays(s *Service, filePath string) ([]types.Event, error) {
-
-	s.logger.Info("loading Holidays")
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	var rawEvents []RawHoliday
-
-	if err := json.Unmarshal(byteValue, &rawEvents); err != nil {
-		return nil, err
-	}
-
-	events, processingErrors := processRawHolidays(s, rawEvents)
-
-	if len(processingErrors) > 0 {
-		s.logger.Error("Encountered errors while processing holidays.", "len", len(processingErrors))
-	}
-
-	return events, nil
-}
-
-// processRawHolidays converts raw holiday data into Event structs.
-// It returns a slice of Events and a slice of errors encountered during processing.
-func processRawHolidays(s *Service, rawEvents []RawHoliday) ([]types.Event, []error) {
-	events := []types.Event{}
-	errorsList := []error{}
-
-	for _, re := range rawEvents {
-		parsedDate, err := utils.ParseDate(re.Date)
-		if err != nil {
-			s.logger.Error("Invalid date format in holidays.json", "error", err)
-			errorsList = append(errorsList, err)
-			continue
-		}
-		events = append(events, types.Event{
-			Date:        parsedDate,
-			Description: re.Name,
-			IsInOffice:  false, // Holidays and vacations override attendance
-			Type:        re.Type,
-		})
-	}
-
-	return events, errorsList
 }
 
 func (s *Service) AddDefaultDays() error {
@@ -506,6 +327,38 @@ func (s *Service) AddDefaultDays() error {
 	return nil
 }
 
+// GetEventByID retrieves a single event by its ID
+func (s *Service) GetEventByID(eventID int) (types.Event, error) {
+	event, err := s.eventRepo.GetEventByID(eventID)
+	if err != nil {
+		s.logger.Error("Error fetching event by ID", "error", err)
+		return types.Event{}, err
+	}
+	return event, nil
+}
+
+// DeleteEvent deletes an event by its ID
+func (s *Service) DeleteEvent(eventID int) error {
+	// First, retrieve the event to ensure it exists and is deletable
+	event, err := s.GetEventByID(eventID)
+	if err != nil {
+		return err
+	}
+
+	if event.Type != "vacation" {
+		return errors.New("only vacation events can be deleted")
+	}
+
+	// Proceed to delete the event
+	err = s.eventRepo.DeleteEvent(eventID)
+	if err != nil {
+		s.logger.Error("Error deleting event", "error", err)
+		return err
+	}
+
+	return nil
+}
+
 
 === End of internal/domain/events.go ===
 
@@ -514,22 +367,31 @@ package domain
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 
 	"github.com/robstave/rto/internal/domain/types"
 )
 
 func (s *Service) UpdatePreferences(defaultDays string, targetDays string) error {
-
-	s.preferences.DefaultDays = defaultDays
-	s.preferences.TargetDays = targetDays
-
-	// Save preferences to JSON file
-	preferencesFilePath := "data/preferences.json"
-	if err := s.SavePreferences(preferencesFilePath); err != nil {
-		s.logger.Error("Error saving preferences", "error", err)
+	// Fetch current preferences from the database
+	prefs, err := s.preferenceRepo.GetPreferences()
+	if err != nil {
+		s.logger.Error("Error fetching preferences", "error", err)
 		return err
 	}
+
+	// Update preferences fields
+	prefs.DefaultDays = defaultDays
+	prefs.TargetDays = targetDays
+
+	// Save updated preferences back to the database
+	if err := s.preferenceRepo.UpdatePreferences(prefs); err != nil {
+		s.logger.Error("Error updating preferences in repository", "error", err)
+		return err
+	}
+
+	// Update the service's local copy if necessary
+	s.preferences = prefs
+
 	return nil
 }
 
@@ -549,45 +411,29 @@ func (s *Service) SavePreferences(filePath string) error {
 }
 
 // InitializePreferences initializes preferences by loading the JSON file
-func initializePreferences(s *Service, filePath string) types.Preferences {
-	prefs, err := loadPreferences(s, filePath)
+func initializePreferences(s *Service) types.Preferences {
+	prefs, err := s.preferenceRepo.GetPreferences()
 	if err != nil {
-		s.logger.Error("Error loading preferences", "error", err)
+		s.logger.Error("Error loading preferences from database", "error", err)
 
-		// Set default preferences if loading fails
-
-		return types.Preferences{
-			DefaultDays: "T,W,Th,F", // Default to Tuesday, Wednesday, Thursday, Friday
+		// Set default preferences if loading fails or no preferences exist
+		defaultPrefs := types.Preferences{
+			DefaultDays: "M,T,W,Th,F", // Adjusted to include Monday by default
 			TargetDays:  "2.5",
 		}
 
-	} else {
-		s.logger.Info("Preferences loaded successfully.")
-		return prefs
-	}
-}
+		if err := s.preferenceRepo.UpdatePreferences(defaultPrefs); err != nil {
+			s.logger.Error("Error setting default preferences in database", "error", err)
+			// Handle as needed, possibly panic or return
+		} else {
+			s.logger.Info("Default preferences set in database.")
+		}
 
-// LoadPreferences loads preferences from a JSON file
-func loadPreferences(s *Service, filePath string) (types.Preferences, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return types.Preferences{}, err
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
-	if err != nil {
-		return types.Preferences{}, err
+		return defaultPrefs
 	}
 
-	var prefs types.Preferences
-	if err := json.Unmarshal(byteValue, &prefs); err != nil {
-		return types.Preferences{}, err
-	}
-
-	s.preferences = prefs
-
-	return types.Preferences{}, err
+	s.logger.Info("Preferences loaded successfully from database.")
+	return prefs
 }
 
 

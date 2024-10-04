@@ -53,3 +53,7 @@ func (m *MockRTOBLL) AddDefaultDays() error {
 	args := m.Called()
 	return args.Error(0)
 }
+func (m *MockRTOBLL) TransformVacationToRemote(eventID int) error {
+	args := m.Called(eventID)
+	return args.Error(0)
+}

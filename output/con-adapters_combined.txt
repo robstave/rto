@@ -23,12 +23,18 @@ type RTOController struct {
 }
 
 func NewRTOController(
+	dbPath string,
 	logger *slog.Logger,
 
 ) *RTOController {
 
-	logger.Info("creating Database")
-	db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
+	// Read DB_PATH from environment variable, set a default if not provided
+
+	//db, err := gorm.Open(sqlite.Open("rto_attendance.db"), &gorm.Config{})
+	//dbPath = dbPath + "/rto_attendance.db"
+	logger.Info("creating Database", "db", dbPath)
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+
 	if err != nil {
 		logger.Error("Failed to connect to database", "error", err)
 		panic("Failed to connect to database")
@@ -66,13 +72,13 @@ func NewRTOController(
 	return &RTOController{service, logger}
 }
 
-func NewRTOControllerWithMock(service domain.RTOBLL) *RTOController {
+func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL) *RTOController {
 	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
 }
 
 func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
 	// Load holidays from JSON file
-	holidaysPath := filepath.Join("data", "holidays.json")
+	holidaysPath := filepath.Join("static", "holidays.json")
 	file, err := os.Open(holidaysPath)
 	if err != nil {
 		logger.Error("Failed to open holidays.json", "error", err)
@@ -552,6 +558,7 @@ type EventRepository interface {
 	UpdateEvent(event types.Event) error
 	DeleteEvent(eventID int) error
 	GetEventByDate(date time.Time) (types.Event, error)
+	GetEventByID(eventID int) (types.Event, error) // New method
 	// Add other methods as needed
 }
 
@@ -574,7 +581,7 @@ import (
 
 func (r *EventRepositorySQLite) GetAllEvents() ([]types.Event, error) {
 	var events []types.Event
-	result := r.db.Find(&events)
+	result := r.db.Order("date ASC").Find(&events)
 	return events, result.Error
 }
 
@@ -596,6 +603,12 @@ func (r *EventRepositorySQLite) DeleteEvent(eventID int) error {
 func (r *EventRepositorySQLite) GetEventByDate(date time.Time) (types.Event, error) {
 	var event types.Event
 	result := r.db.Where("date = ?", date).First(&event)
+	return event, result.Error
+}
+
+func (r *EventRepositorySQLite) GetEventByID(eventID int) (types.Event, error) {
+	var event types.Event
+	result := r.db.First(&event, eventID)
 	return event, result.Error
 }
 
