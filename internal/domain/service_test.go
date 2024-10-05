@@ -13,7 +13,7 @@ import (
 
 func TestUpdatePreferences_Success(t *testing.T) {
 	// Initialize the mock repository
-	mockRepo := new(mocks.MockPreferenceRepository)
+	mockRepo := new(mocks.PreferenceRepository)
 
 	// Define the initial preferences
 	initialPrefs := types.Preferences{
@@ -55,7 +55,7 @@ func TestUpdatePreferences_Success(t *testing.T) {
 
 func TestUpdatePreferences_GetPreferencesError(t *testing.T) {
 	// Initialize the mock repository
-	mockRepo := new(mocks.MockPreferenceRepository)
+	mockRepo := new(mocks.PreferenceRepository)
 
 	// Setup expectations
 	mockRepo.On("GetPreferences").Return(types.Preferences{}, errors.New("database error"))
@@ -81,7 +81,7 @@ func TestUpdatePreferences_GetPreferencesError(t *testing.T) {
 
 func TestUpdatePreferences_UpdatePreferencesError(t *testing.T) {
 	// Initialize the mock repository
-	mockRepo := new(mocks.MockPreferenceRepository)
+	mockRepo := new(mocks.PreferenceRepository)
 
 	// Define the initial preferences
 	initialPrefs := types.Preferences{

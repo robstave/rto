@@ -1,3 +1,5 @@
+<!-- In templates/add_event.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +46,44 @@
         </form>
     </div>
 
+    <!-- Divider -->
+    <hr style="max-width: 600px; margin: 40px auto;">
+
+    <!-- Bulk Add Section -->
+    <div class="bulk-add-form" style="max-width: 600px; margin: 0 auto;">
+        <h2>Bulk Add Vacations</h2>
+        <p>Paste your JSON array of vacation events below and click "Bulk Add" to add them to the calendar. Existing events on the same dates will be overridden.</p>
+        <form id="bulkAddForm">
+            <textarea id="bulkJson" rows="10" placeholder='[
+    {
+        "date": "2024-12-23",
+        "description": "Float",
+        "type": "vacation"
+    },
+    {
+        "date": "2024-12-24",
+        "description": "PTO",
+        "type": "vacation"
+    },
+    {
+        "date": "2024-12-26",
+        "description": "PTO",
+        "type": "vacation"
+    }
+]' style="width: 100%; padding: 8px;"></textarea>
+            <button type="button" id="bulkAddButton" style="padding: 10px 20px; margin-top: 10px;">Bulk Add</button>
+        </form>
+    </div>
+
+    <!-- Optional: Success and Error Messages -->
+    <div id="bulkAddMessage" style="max-width: 600px; margin: 20px auto; text-align: center;"></div>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Toastr JS (if not already included) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script>
         // Show/hide attendance options based on event type
         document.getElementById('type').addEventListener('change', function() {
@@ -53,6 +93,77 @@
             } else {
                 attendanceOptions.style.display = 'none';
             }
+        });
+
+        $(document).ready(function () {
+            $('#bulkAddButton').on('click', function () {
+                var bulkJson = $('#bulkJson').val().trim();
+
+                if (bulkJson === "") {
+                    toastr.error('Please paste JSON data to bulk add vacations.');
+                    return;
+                }
+
+                var events;
+                try {
+                    events = JSON.parse(bulkJson);
+                } catch (e) {
+                    toastr.error('Invalid JSON format. Please correct it and try again.');
+                    return;
+                }
+
+                // Validate that events is an array
+                if (!Array.isArray(events)) {
+                    toastr.error('JSON data must be an array of events.');
+                    return;
+                }
+
+                // Validate each event object
+                for (var i = 0; i < events.length; i++) {
+                    var event = events[i];
+                    if (!event.date || !event.description || !event.type) {
+                        toastr.error('Each event must have "date", "description", and "type" fields.');
+                        return;
+                    }
+
+                    // Additional validation: ensure type is 'vacation'
+                    if (event.type.toLowerCase() !== 'vacation') {
+                        toastr.error('Only events with type "vacation" can be bulk added.');
+                        return;
+                    }
+
+                    // Validate date format (YYYY-MM-DD)
+                    var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!dateRegex.test(event.date)) {
+                        toastr.error('Invalid date format for event on ' + event.date + '. Expected YYYY-MM-DD.');
+                        return;
+                    }
+                }
+
+                // Send AJAX POST request to bulk add events
+                $.ajax({
+                    url: '/add-events-json',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ events: events }),
+                    success: function (response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            // Optionally, clear the textarea
+                            $('#bulkJson').val('');
+                            // Optionally, refresh the page or update the calendar dynamically
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            toastr.error('Failed to bulk add vacations: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        toastr.error('An error occurred while bulk adding vacations.');
+                    }
+                });
+            });
         });
     </script>
 </body>

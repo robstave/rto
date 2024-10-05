@@ -22,7 +22,7 @@ func TestEventsList(t *testing.T) {
 	e := echo.New()
 
 	// Create a mock RTOBLL
-	mockService := new(mocks.MockRTOBLL)
+	mockService := new(mocks.RTOBLL)
 
 	// Define mock events
 	mockEvents := []types.Event{

@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -75,4 +77,86 @@ func (ctlr *RTOController) AddDefaultDays(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to add default attendance events.")
 	}
 	return c.Redirect(http.StatusSeeOther, "/prefs")
+}
+
+type RawEvent struct {
+	Date        string `json:"date"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+}
+
+// BulkAddEventsJSONRequest represents the expected JSON payload for bulk adding events
+type BulkAddEventsJSONRequest struct {
+	Events []RawEvent `json:"events"`
+}
+
+// BulkAddEventsJSON handles the bulk addition of vacation events via JSON
+func (ctlr *RTOController) BulkAddEventsJSON(c echo.Context) error {
+	var rawEventsReq BulkAddEventsJSONRequest
+
+	// Parse and decode the JSON request body into rawEvents
+	if err := c.Bind(&rawEventsReq); err != nil {
+		ctlr.logger.Error("Error binding bulk add JSON", "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Invalid JSON payload.",
+		})
+	}
+
+	var domainEvents []types.Event
+
+	// Iterate over each raw event to validate and transform
+	for i, rawEvent := range rawEventsReq.Events {
+		// Basic validation
+		if strings.TrimSpace(rawEvent.Date) == "" ||
+			strings.TrimSpace(rawEvent.Description) == "" ||
+			strings.TrimSpace(rawEvent.Type) == "" {
+			ctlr.logger.Error("Incomplete event data in bulk add", "event_index", i, "event", rawEvent)
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"success": false,
+				"message": fmt.Sprintf("Event at index %d is missing required fields.", i),
+			})
+		}
+
+		// Ensure the event type is 'vacation'
+		if strings.ToLower(rawEvent.Type) != "vacation" {
+			ctlr.logger.Error("Invalid event type in bulk add", "event_index", i, "event", rawEvent)
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"success": false,
+				"message": fmt.Sprintf("Only events with type 'vacation' can be bulk added (error at index %d).", i),
+			})
+		}
+
+		// Validate and parse date (YYYY-MM-DD)
+		parsedDate, err := time.Parse("2006-01-02", rawEvent.Date)
+		if err != nil {
+			ctlr.logger.Error("Invalid date format in bulk add", "event_index", i, "event", rawEvent, "error", err)
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"success": false,
+				"message": fmt.Sprintf("Invalid date format for event on %s. Expected YYYY-MM-DD.", rawEvent.Date),
+			})
+		}
+
+		// Create domain Event
+		domainEvent := types.Event{
+			Date:        parsedDate, // Assuming types.Date is defined in the domain layer
+			Description: rawEvent.Description,
+			Type:        strings.ToLower(rawEvent.Type),
+		}
+
+		domainEvents = append(domainEvents, domainEvent)
+	}
+
+	// Delegate the processing to the service layer
+	response, err := ctlr.service.BulkAddEvents(domainEvents)
+	if err != nil {
+		ctlr.logger.Error("Error in BulkAddEvents service method", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "An error occurred while processing bulk add events.",
+		})
+	}
+
+	// Return the service layer's response
+	return c.JSON(http.StatusOK, response)
 }

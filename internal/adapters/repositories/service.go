@@ -1,3 +1,5 @@
+//go:generate mockery --name RTOBLL
+
 package repository
 
 import (

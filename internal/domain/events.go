@@ -2,11 +2,12 @@ package domain
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/robstave/rto/internal/domain/types"
+	"gorm.io/gorm"
 )
 
 func (s *Service) GetAllEvents() []types.Event {
@@ -154,4 +155,29 @@ func (s *Service) DeleteEvent(eventID int) error {
 	}
 
 	return nil
+}
+
+// UpdateEvent updates an existing event in the database
+func (s *Service) UpdateEvent(event types.Event) error {
+	if event.ID == 0 {
+		return errors.New("event ID is required for update")
+	}
+	err := s.eventRepo.UpdateEvent(event)
+	if err != nil {
+		s.logger.Error("Failed to update event", "eventID", event.ID, "error", err)
+		return err
+	}
+	return nil
+}
+
+// GetEventByDateAndType retrieves an event by date and type
+func (s *Service) GetEventByDateAndType(date time.Time, eventType string) (*types.Event, error) {
+	event, err := s.eventRepo.GetEventByDateAndType(date, eventType)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("record not found")
+		}
+		return nil, err
+	}
+	return &event, nil
 }

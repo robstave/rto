@@ -1,12 +1,16 @@
+//go:generate mockery --name EventRepository
 package repository
 
 import (
 	"time"
 
 	"github.com/robstave/rto/internal/domain/types"
+	"gorm.io/gorm"
 )
 
-// Existing EventRepository interface methods...
+type EventRepositorySQLite struct {
+	db *gorm.DB
+}
 
 type EventRepository interface {
 	GetAllEvents() ([]types.Event, error)
@@ -19,10 +23,9 @@ type EventRepository interface {
 
 	// New method to fetch event by date and type
 	GetEventByDateAndType(date time.Time, eventType string) (types.Event, error)
+	GetEventsByDate(date time.Time) ([]types.Event, error)
 }
 
-type PreferenceRepository interface {
-	GetPreferences() (types.Preferences, error)
-	UpdatePreferences(prefs types.Preferences) error
-	// Add other methods as needed
+func NewEventRepositorySQLite(db *gorm.DB) EventRepository {
+	return &EventRepositorySQLite{db: db}
 }
