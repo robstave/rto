@@ -34,14 +34,20 @@
 
     <!-- Display In-Office Average -->
     <div class="attendance-average" style="text-align: center; margin-bottom: 120px;">
-        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
-        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}} </p>
 
+ 
         <div class="progress-bar-container">
             <div class="progress-bar">
                 <div id="progress-fill" class="progress-fill"></div>
+                <!-- Tick Marks Container -->
+                <div class="ticks" id="ticks-container">
+                    <!-- Tick marks will be dynamically generated here -->
+                </div>
             </div>
         </div>
+        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
+        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}} </p>
+
     </div>
  
 
@@ -118,9 +124,31 @@
     <!-- JavaScript for Toggling Attendance and Updating Progress Bar -->
     <script>
         $(document).ready(function () {
+
+            // Define total days (e.g., 7 for a week)
+        var totalDays = 7;
+        var ticksContainer = $('#ticks-container');
+        // Function to create tick marks
+function createTicks(total) {
+    for (var i = 1; i <= total; i++) {
+        var leftPercent = (i / total) * 100; // Calculate position
+        var tick = $('<div class="tick"></div>').css('left', leftPercent + '%');
+        var label = $('<span class="tick-label">' + i  + '</span>');
+        tick.append(label); // Nest label inside tick
+        ticksContainer.append(tick);
+    }
+}
+
+
+
+
+
+
             // Function to initialize the progress bar
             function initializeProgressBar(averagePercent,targetDays) {
-                $('#progress-fill').css('width', averagePercent + '%');     
+                $('#progress-fill').css('width', averagePercent + '%');
+                $('#progress-percent').text(averagePercent + '% In Office');
+                
 
                 // color is determined by 2 rules
                 // 2 and under is red...bad
@@ -134,8 +162,15 @@
                     $('#progress-fill').css('background-color', '#4CAF50'); // Green
                 }
             }
-  
+
+            
+            // Initialize Progress Bar on Page Load
+       
+              var initialAverage = {{ printf "%.2f" .Average }};
+            var targetDays = {{ printf "%.2f" .TargetDays }};
+           
             initializeProgressBar(initialAverage, targetDays);
+            createTicks(totalDays);
 
             // Handle click on attendance toggle
             $('.toggle-attendance').on('click', function () {

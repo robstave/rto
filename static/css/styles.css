@@ -100,17 +100,18 @@ p {
 
 /* Progress Bar */
 .progress-bar-container {
+    position: relative;
     width: 50%;
     max-width: 400px;
     margin: 0 auto 10px auto;
 }
 
 .progress-bar {
+    position: relative;
     width: 100%;
     background-color: var(--color-progress-bg);
     border-radius: 10px;
     overflow: hidden;
-    /* Prevents fill from overflowing */
     height: 20px;
 }
 
@@ -120,8 +121,38 @@ p {
     background-color: var(--color-progress-fill);
     border-radius: 10px 0 0 10px;
     transition: width 0.5s ease, background-color 0.3s ease;
+    z-index: 1;
 }
 
+
+.ticks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allows clicks to pass through */
+    z-index: 2; /* Higher z-index to ensure visibility above progress-fill */
+}
+
+.tick {
+    position: absolute;
+    top: -5px; /* Adjust to position tick correctly */
+    width: 1px;
+    height: 10px;
+    background-color: #000; /* Ensure contrast */
+}
+
+.tick-label {
+    position: absolute;
+    top: 12px; /* Position below the tick */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #000;
+}
+ 
+ 
 /* Attendance Chart */
 .attendance-chart {
     width: 100%;

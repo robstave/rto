@@ -100,17 +100,18 @@ p {
 
 /* Progress Bar */
 .progress-bar-container {
+    position: relative;
     width: 50%;
     max-width: 400px;
     margin: 0 auto 10px auto;
 }
 
 .progress-bar {
+    position: relative;
     width: 100%;
     background-color: var(--color-progress-bg);
     border-radius: 10px;
     overflow: hidden;
-    /* Prevents fill from overflowing */
     height: 20px;
 }
 
@@ -120,8 +121,42 @@ p {
     background-color: var(--color-progress-fill);
     border-radius: 10px 0 0 10px;
     transition: width 0.5s ease, background-color 0.3s ease;
+    z-index: 0;
 }
 
+
+.ticks {
+    position: absolute;
+    top: -15px; /* Adjust as needed */
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 10px;
+    background-color: #000;
+}
+
+.tick-label {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #000;
+}
+
+
+ 
+
+ 
+ 
 /* Attendance Chart */
 .attendance-chart {
     width: 100%;
@@ -842,12 +877,16 @@ input:checked + .slider:before {
         <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
         <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}} </p>
 
-        <!-- Simple HTML Progress Bar -->
+ 
         <div class="progress-bar-container">
             <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill" style="width: {{printf "%.2f" .Average}}%;"></div>
+                <div id="progress-fill" class="progress-fill"></div>
+                       <!-- Tick Marks Container -->
+        <div class="ticks" id="ticks-container">
+            <!-- Tick marks will be dynamically generated here -->
+        </div>
             </div>
-            <p id="progress-percent">{{printf "%.2f" .Average}}% In Office</p>
+            
         </div>
     </div>
  
@@ -925,27 +964,49 @@ input:checked + .slider:before {
     <!-- JavaScript for Toggling Attendance and Updating Progress Bar -->
     <script>
         $(document).ready(function () {
+
+            // Define total days (e.g., 7 for a week)
+        var totalDays = 7;
+        var ticksContainer = $('#ticks-container');
+        // Function to create tick marks
+        function createTicks(total) {
+            for (var i = 1; i <= total; i++) {
+                var leftPercent = (i / total) * 100; // Calculate position
+                var tick = $('<div class="tick"></div>').css('left', leftPercent + '%');
+                var label = $('<span class="tick-label">' + i  + '</span>');
+                tick.append(label);
+                ticksContainer.append(tick);
+            }
+        }
+
+
             // Function to initialize the progress bar
             function initializeProgressBar(averagePercent,targetDays) {
                 $('#progress-fill').css('width', averagePercent + '%');
                 $('#progress-percent').text(averagePercent + '% In Office');
-                // Optionally, change the color based on percentage
-                if ((averagePercent * 7.0) < 2) {
+                
+
+                // color is determined by 2 rules
+                // 2 and under is red...bad
+                // A targetDays is in the prefs.  Some folks target 2.5 days
+                // under the target is yellow.  Above is Green
+                if ((averagePercent * 7.0/100.0) < 2) {
                     $('#progress-fill').css('background-color', '#F44336'); // Red
-                } else if ((averagePercent * 7.0) < targetDays) {
+                } else if ((averagePercent * 7.0/100.0) < targetDays) {
                     $('#progress-fill').css('background-color', '#FFC107'); // Yellow
                 } else {
                     $('#progress-fill').css('background-color', '#4CAF50'); // Green
                 }
             }
 
-            // Initialize Progress Bar on Page Load
-            var initialAveragePercent = {{ printf "%.2f" .AveragePercent }};
-            var targetDays = {{ printf "%.2f" .TargetDays }};
-
             
-
-            initializeProgressBar(initialAveragePercent, targetDays);
+            // Initialize Progress Bar on Page Load
+       
+              var initialAverage = {{ printf "%.2f" .Average }};
+            var targetDays = {{ printf "%.2f" .TargetDays }};
+           
+            initializeProgressBar(initialAverage, targetDays);
+            createTicks(totalDays);
 
             // Handle click on attendance toggle
             $('.toggle-attendance').on('click', function () {
