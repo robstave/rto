@@ -84,6 +84,7 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	// Fetch target days from preferences
 
 	currentPreferences := ctlr.service.GetPrefs()
+	targetDaysFloat, _ := strconv.ParseFloat(currentPreferences.TargetDays, 64)
 
 	data := map[string]interface{}{
 		"CurrentDate": currentDate,
@@ -102,8 +103,8 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 		"TotalDays":     totalDays,
 		"Average":       average,
 		"AverageDays":   averageDays,
+		"TargetDays":    targetDaysFloat,
 		"Preferences":   currentPreferences, // Add Preferences here
-
 	}
 
 	//log
@@ -117,6 +118,8 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 			}
 		}
 	}
+
+	ctlr.logger.Info("***********", "Average", average, "TotalDays", totalDays)
 
 	// Render the template
 	if err := c.Render(http.StatusOK, "home.html", data); err != nil {

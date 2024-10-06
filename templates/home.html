@@ -15,9 +15,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -26,44 +23,27 @@
     <!-- Navigation Links with Current Month and Year -->
     <div class="navigation">
         <!-- Previous Month -->
-        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous
-            Month</a>
-    
+        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous Month</a>
+
         <!-- Current Month -->
         <span class="current-month">{{.CurrentDate.Format "January 2006"}}</span>
-    
+
         <!-- Next Month -->
         <a href="/?year={{.NextMonth.year}}&month={{.NextMonth.month}}&day={{.NextMonth.day}}">Next Month &raquo;</a>
     </div>
 
     <!-- Display In-Office Average -->
     <div class="attendance-average" style="text-align: center; margin-bottom: 120px;">
-        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
-            Week</h3>
-        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}}   
-        </p>
+        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
+        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}} </p>
 
-
-          <!-- Attendance Bar Chart -->
-    <div class="attendance-chart" style="max-width: 800px; margin: 40px auto; height: 50px; position: relative;">
-        <h3 style="text-align: center; font-size: 1.2em;">Weekly In-Office Days</h3>
-        <canvas id="attendanceChart" style="height: 50px; width: 100%;"></canvas>
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+        </div>
     </div>
-
-
-    </div>
-
-  
-
-
-    <!-- Display Success Message -->
-    {{if .Message}}
-    <div class="message" style="text-align: center; color: green; margin-bottom: 20px;">
-        <p>{{.Message}}</p>
-    </div>
-    {{end}}
-
-
+ 
 
     <!-- Legend -->
     <div class="legend">
@@ -114,8 +94,7 @@
                     <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}"
                         data-date="{{.Date.Format "2006-01-02"}}"
                         data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
-                        {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i
-                            class="fa-solid fa-home"></i> Remote{{end}}
+                        {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i class="fa-solid fa-home"></i> Remote{{end}}
                     </span>
                     {{end}}
                     {{end}}
@@ -127,142 +106,86 @@
         {{end}}
     </table>
 
-<!-- Action Buttons -->
-<div class="action-buttons" style="text-align: center; margin: 20px 0;">
-    <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add Event</button>
-    <button onclick="window.location.href='/events'" style="padding: 10px 20px; margin-right: 10px;">Events</button>
-    <button onclick="window.location.href='/prefs'" style="padding: 10px 20px; margin-right: 10px;">Prefs</button>
-    <!-- **New Export Button** -->
-    <button onclick="window.location.href='/export/markdown'" style="padding: 10px 20px;">Export as Markdown</button>
-</div>
+    <!-- Action Buttons -->
+    <div class="action-buttons" style="text-align: center; margin: 20px 0;">
+        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add Event</button>
+        <button onclick="window.location.href='/events'" style="padding: 10px 20px; margin-right: 10px;">Events</button>
+        <button onclick="window.location.href='/prefs'" style="padding: 10px 20px; margin-right: 10px;">Prefs</button>
+        <!-- **New Export Button** -->
+        <button onclick="window.location.href='/export/markdown'" style="padding: 10px 20px;">Export as Markdown</button>
+    </div>
 
-    <!-- JavaScript for Toggling Attendance and Chart Updates -->
+    <!-- JavaScript for Toggling Attendance and Updating Progress Bar -->
     <script>
         $(document).ready(function () {
-            // Function to determine bar color based on average days and target
-            function getBarColor(averageDays, targetDays) {
-                if (averageDays < 2) {
-                    return 'rgba(244, 67, 54, 0.6)'; // Red
-                } else if (averageDays >= 2 && averageDays < targetDays) {
-                    return 'rgba(255, 193, 7, 0.6)'; // Yellow
+            // Function to initialize the progress bar
+            function initializeProgressBar(averagePercent,targetDays) {
+                $('#progress-fill').css('width', averagePercent + '%');     
+
+                // color is determined by 2 rules
+                // 2 and under is red...bad
+                // A targetDays is in the prefs.  Some folks target 2.5 days
+                // under the target is yellow.  Above is Green
+                if ((averagePercent * 7.0/100.0) < 2) {
+                    $('#progress-fill').css('background-color', '#F44336'); // Red
+                } else if ((averagePercent * 7.0/100.0) < targetDays) {
+                    $('#progress-fill').css('background-color', '#FFC107'); // Yellow
                 } else {
-                    return 'rgba(76, 175, 80, 0.6)'; // Green
+                    $('#progress-fill').css('background-color', '#4CAF50'); // Green
                 }
             }
+  
+            initializeProgressBar(initialAverage, targetDays);
 
-            // Function to parse float safely
-            function parseFloatSafe(value) {
-                var parsed = parseFloat(value);
-                return isNaN(parsed) ? 0 : parsed;
-            }
+            // Handle click on attendance toggle
+            $('.toggle-attendance').on('click', function () {
+                var span = $(this);
+                var date = span.data('date');
+                var currentStatus = span.data('status'); // 'in' or 'remote'
 
-            var ctx = document.getElementById('attendanceChart').getContext('2d');
-            var averageDays = parseFloatSafe({{ printf "%.2f" .AverageDays }});
-            var targetDays = parseFloatSafe({{ if .Preferences.TargetDays }}{{ printf "%.2f" .Preferences.TargetDays }}{{ else }}2.5{{ end }});
-        
+                // Send AJAX POST request to toggle attendance
+                $.ajax({
+                    url: '/toggle-attendance',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ date: date }),
+                    success: function (response) {
+                        if (response.success) {
+                            console.log("Success:", response);
+                            // Update the span's class and text
+                            if (response.newStatus === 'in') {
+                                span.removeClass('event-remote').addClass('event-in-office');
+                                span.html('<i class="fa-solid fa-building"></i> In Office');
+                                span.data('status', 'in');
+                            } else {
+                                span.removeClass('event-in-office').addClass('event-remote');
+                                span.html('<i class="fa-solid fa-home"></i> Remote');
+                                span.data('status', 'remote');
+                            }
 
-             var attendanceChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['In Office'],
-                    datasets: [{
-                        label: 'Days per Week',
-                    data: [averageDays],
-                    backgroundColor: [getBarColor(averageDays, targetDays)],
-                    borderColor: [getBarColor(averageDays, targetDays)],
-                    borderWidth: 1,
-                    maxBarThickness: 50
-        }]
-    },
-        options: {
-            indexAxis: 'y',
-                scales: {
-                x: {
-                    beginAtZero: true,
-                        max: 5,
-                            ticks: {
-                        stepSize: 1
-                    },
-                    grid: {
-                        display: false
-                    }
-                },
-                y: {
-                    display: false
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.parsed.x + ' Days';
-                        }
-                    }
-                }
-            },
-            responsive: true,
-                maintainAspectRatio: false // This line ensures the chart uses the container's height
-        }
-});
-        // Handle click on attendance toggle
-        $('.toggle-attendance').on('click', function () {
-            var span = $(this);
-            var date = span.data('date');
-            var currentStatus = span.data('status'); // 'in' or 'remote'
+                            // Update counts and averages
+                            var averageDays = parseFloat(response.averageDays).toFixed(2);
+                            var targetDays = parseFloat(response.targetDays).toFixed(2);
+                            var inOfficeCount = response.inOfficeCount;
+                            var totalDays = response.totalDays;
+                            var averagePercent = ((parseFloat(inOfficeCount) / parseFloat(totalDays)) * 100).toFixed(2);
 
-            // Send AJAX POST request to toggle attendance
-            $.ajax({
-                url: '/toggle-attendance',
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ date: date }),
-                success: function (response) {
-                    if (response.success) {
-                        console.log("Success:", response);
-                        // Update the span's class and text
-                        if (response.newStatus === 'in') {
-                            span.removeClass('event-remote').addClass('event-in-office');
-                            span.html('<i class="fa-solid fa-building"></i> In Office');
-                            span.data('status', 'in');
+                            $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + averageDays + ' Days per Week');
+                            $('#counts').text('In-Office Days: ' + inOfficeCount + ' / Total Days: ' + totalDays  + ' / Target Days: ' + targetDays);
+                            initializeProgressBar(averagePercent,targetDays);
+
+                            // Optionally, show a success message using Toastr
+                            toastr.success('Attendance status updated successfully.');
                         } else {
-                            span.removeClass('event-in-office').addClass('event-remote');
-                            span.html('<i class="fa-solid fa-home"></i> Remote');
-                            span.data('status', 'remote');
+                            // Optionally, show an error message using Toastr
+                            toastr.error('Failed to update attendance status: ' + response.message);
                         }
-
-                        // Update counts and averages
-                        var averageDays = parseFloatSafe(response.averageDays).toFixed(2);
-                        var targetDays = parseFloatSafe(response.targetDays).toFixed(2);
-                        var inOfficeCount = response.inOfficeCount;
-                        var totalDays = response.totalDays;
-                        var averagePercent = parseFloatSafe(response.average).toFixed(2);
-
-                        $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + averageDays + ' Days per Week');
-                        $('#counts').text('In-Office Days: ' + inOfficeCount + ' / Total Days: ' + totalDays + ' / Ave Days: ' + averageDays);
-                        $('#progress-fill').css('width', averagePercent + '%');
-                        $('#progress-percent').text(averagePercent + '% In Office');
-
-                        // Update Chart.js data
-                        attendanceChart.data.datasets[0].data = [averageDays];
-                        attendanceChart.data.datasets[0].backgroundColor = [getBarColor(averageDays, targetDays)];
-                        attendanceChart.data.datasets[0].borderColor = [getBarColor(averageDays, targetDays)];
-                        attendanceChart.update();
-
-                        // Optionally, show a success message using Toastr
-                        toastr.success('Attendance status updated successfully.');
-                    } else {
-                        // Optionally, show an error message using Toastr
-                        toastr.error('Failed to update attendance status: ' + response.message);
+                    },
+                    error: function () {
+                        toastr.error('An error occurred while updating attendance status.');
                     }
-                },
-                error: function () {
-                    toastr.error('An error occurred while updating attendance status.');
-                }
+                });
             });
-        });
         });
     </script>
 </body>

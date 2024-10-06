@@ -79,11 +79,18 @@ func (s *Service) CalculateAttendanceStats() (*types.AttendanceStats, error) {
 		targetDays = 2.5
 	}
 
+	// Calculate Average Percent
+	averagePercent := 0.0
+	if targetDays > 0 {
+		averagePercent = (averageDays / targetDays) * 100
+	}
+
 	return &types.AttendanceStats{
-		InOfficeCount: inOfficeCount,
-		TotalDays:     totalDays,
-		Average:       average,
-		AverageDays:   averageDays,
-		TargetDays:    targetDays,
+		InOfficeCount:  inOfficeCount,
+		TotalDays:      totalDays,
+		Average:        average,
+		AverageDays:    averageDays,
+		TargetDays:     targetDays,
+		AveragePercent: averagePercent,
 	}, nil
 }

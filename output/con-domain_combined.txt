@@ -102,6 +102,10 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// Register the new route for adding default days
 	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
 	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
+	e.POST("/add-events-json", rtoCtl.BulkAddEventsJSON)
+
+	// **New Route for Exporting Events as Markdown**
+	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
 
 	return e
 }
@@ -112,6 +116,7 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 package types
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -121,6 +126,15 @@ type Event struct {
 	Description string    `json:"description"`
 	IsInOffice  bool      `json:"isInOffice"`
 	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
+}
+
+func (e Event) String() string {
+	return fmt.Sprintf("Event{ID: %d, Date: %s, Description: %q, IsInOffice: %t, Type: %q}",
+		e.ID,
+		e.Date.Format("2006-01-02"),
+		e.Description,
+		e.IsInOffice,
+		e.Type)
 }
 
 type Preferences struct {
@@ -140,11 +154,29 @@ type CalendarDay struct {
 }
 
 type AttendanceStats struct {
-	InOfficeCount int
-	TotalDays     int
-	Average       float64
-	AverageDays   float64
-	TargetDays    float64
+	InOfficeCount  int
+	TotalDays      int
+	Average        float64
+	AverageDays    float64
+	TargetDays     float64
+	AveragePercent float64
+}
+
+type BulkAddResult struct {
+	Date        string `json:"date"`
+	Action      string `json:"action"`
+	Description string `json:"description,omitempty"`
+	Error       string `json:"error,omitempty"`
+}
+
+// BulkAddResponse encapsulates the overall result of a bulk add operation
+type BulkAddResponse struct {
+	Success bool            `json:"success"`
+	Added   int             `json:"added"`
+	Updated int             `json:"updated"`
+	Skipped int             `json:"skipped"`
+	Message string          `json:"message"`
+	Results []BulkAddResult `json:"results"`
 }
 
 
@@ -153,11 +185,182 @@ type AttendanceStats struct {
 package domain
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/robstave/rto/internal/domain/types"
+)
+
+// BulkAddEvents processes a list of vacation events, adding or updating them based on existing events
+func (s *Service) BulkAddEvents(events []types.Event) (*types.BulkAddResponse, error) {
+	// Initialize counters and result list
+	var addedCount, updatedCount, skippedCount int
+	var failedEvents []string
+	var results []types.BulkAddResult
+
+	s.logger.Info("---BulkAddEvents----", "events", len(events))
+
+	for _, event := range events {
+		date := event.Date
+		dateStr := date.Format("2006-01-02")
+		eventsOnDate, err := s.eventRepo.GetEventsByDate(date)
+		if err != nil && !s.IsRecordNotFoundError(err) {
+			s.logger.Error("--Error fetching events by date", "date", date, "error", err)
+			failedEvents = append(failedEvents, dateStr)
+			results = append(results, types.BulkAddResult{
+				Date:  dateStr,
+				Error: "Error fetching events for this date.",
+			})
+			continue
+		}
+
+		var holidayExists, vacationExists bool
+		var attendanceEvent *types.Event
+
+		for _, e := range eventsOnDate {
+			switch strings.ToLower(e.Type) {
+			case "holiday":
+				holidayExists = true
+			case "vacation":
+				vacationExists = true
+			case "attendance":
+				attendanceEvent = &e
+			}
+		}
+
+		if holidayExists {
+			// Skip adding/updating if a holiday exists on the date
+			skippedCount++
+			results = append(results, types.BulkAddResult{
+				Date:   dateStr,
+				Action: "Skipped (Holiday exists)",
+			})
+			continue
+		}
+
+		if vacationExists {
+			// Update the existing vacation event
+			existingVacation, err := s.GetEventByDateAndType(date, "vacation")
+			if err != nil {
+				s.logger.Error("Error fetching existing vacation event", "date", date, "error", err)
+				failedEvents = append(failedEvents, dateStr)
+				results = append(results, types.BulkAddResult{
+					Date:  dateStr,
+					Error: "Error fetching existing vacation event.",
+				})
+				continue
+			}
+
+			existingVacation.Description = event.Description
+			err = s.UpdateEvent(*existingVacation)
+			if err != nil {
+				s.logger.Error("Failed to update existing vacation event", "event", existingVacation, "error", err)
+				failedEvents = append(failedEvents, dateStr)
+				results = append(results, types.BulkAddResult{
+					Date:  dateStr,
+					Error: "Failed to update existing vacation event.",
+				})
+				continue
+			}
+			updatedCount++
+			results = append(results, types.BulkAddResult{
+				Date:        dateStr,
+				Action:      "Updated existing vacation",
+				Description: existingVacation.Description,
+			})
+			continue
+		}
+
+		if attendanceEvent != nil {
+			// Update the attendance event to a vacation
+			s.logger.Info("+++update", "event", event.String())
+
+			attendanceEvent.Type = "vacation"
+			attendanceEvent.Description = event.Description
+			err = s.UpdateEvent(*attendanceEvent)
+			if err != nil {
+				s.logger.Error("Failed to update attendance event to vacation", "event", attendanceEvent, "error", err)
+				failedEvents = append(failedEvents, dateStr)
+				results = append(results, types.BulkAddResult{
+					Date:  dateStr,
+					Error: "Failed to transform attendance event to vacation.",
+				})
+				continue
+			}
+			updatedCount++
+			results = append(results, types.BulkAddResult{
+				Date:        dateStr,
+				Action:      "Transformed attendance to vacation",
+				Description: attendanceEvent.Description,
+			})
+			continue
+		}
+
+		// If no events exist on that date, add the vacation event
+		err = s.AddEvent(event)
+		if err != nil {
+			s.logger.Error("Failed to add vacation event", "event", event, "error", err)
+			failedEvents = append(failedEvents, dateStr)
+			results = append(results, types.BulkAddResult{
+				Date:  dateStr,
+				Error: "Failed to add vacation event.",
+			})
+			continue
+		}
+		addedCount++
+		results = append(results, types.BulkAddResult{
+			Date:        dateStr,
+			Action:      "Added new vacation",
+			Description: event.Description,
+		})
+	}
+
+	// Prepare the response message
+	messageParts := []string{}
+	if addedCount > 0 {
+		messageParts = append(messageParts, fmt.Sprintf("Successfully added %d vacation event(s).", addedCount))
+	}
+	if updatedCount > 0 {
+		messageParts = append(messageParts, fmt.Sprintf("Successfully updated %d event(s).", updatedCount))
+	}
+	if skippedCount > 0 {
+		messageParts = append(messageParts, fmt.Sprintf("Skipped %d event(s) due to existing holidays.", skippedCount))
+	}
+	if len(failedEvents) > 0 {
+		messageParts = append(messageParts, fmt.Sprintf("Failed to process events on dates: %s.", strings.Join(failedEvents, ", ")))
+	}
+
+	message := strings.Join(messageParts, " ")
+
+	// Create the BulkAddResponse
+	response := &types.BulkAddResponse{
+		Success: true,
+		Added:   addedCount,
+		Updated: updatedCount,
+		Skipped: skippedCount,
+		Message: message,
+		Results: results,
+	}
+
+	return response, nil
+}
+
+// IsRecordNotFoundError checks if an error is a record not found error
+func (s *Service) IsRecordNotFoundError(err error) bool {
+	return strings.Contains(err.Error(), "record not found")
+}
+
+
+=== End of internal/domain/bulkadd.go ===
+
+//go:generate mockery --name RTOBLL
+package domain
+
+import (
 	"log/slog"
 	"time"
 
 	repository "github.com/robstave/rto/internal/adapters/repositories"
-
 	"github.com/robstave/rto/internal/domain/types"
 )
 
@@ -172,6 +375,10 @@ type RTOBLL interface {
 	AddDefaultDays() error
 	DeleteEvent(eventID int) error
 	GetEventByID(eventID int) (types.Event, error)
+	TransformVacationToRemote(eventID int) error
+	GetEventByDateAndType(date time.Time, eventType string) (*types.Event, error)
+	UpdateEvent(event types.Event) error
+	BulkAddEvents(events []types.Event) (*types.BulkAddResponse, error)
 }
 
 type Service struct {
@@ -205,11 +412,12 @@ package domain
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/robstave/rto/internal/domain/types"
+	"gorm.io/gorm"
 )
 
 func (s *Service) GetAllEvents() []types.Event {
@@ -357,6 +565,31 @@ func (s *Service) DeleteEvent(eventID int) error {
 	}
 
 	return nil
+}
+
+// UpdateEvent updates an existing event in the database
+func (s *Service) UpdateEvent(event types.Event) error {
+	if event.ID == 0 {
+		return errors.New("event ID is required for update")
+	}
+	err := s.eventRepo.UpdateEvent(event)
+	if err != nil {
+		s.logger.Error("Failed to update event", "eventID", event.ID, "error", err)
+		return err
+	}
+	return nil
+}
+
+// GetEventByDateAndType retrieves an event by date and type
+func (s *Service) GetEventByDateAndType(date time.Time, eventType string) (*types.Event, error) {
+	event, err := s.eventRepo.GetEventByDateAndType(date, eventType)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("record not found")
+		}
+		return nil, err
+	}
+	return &event, nil
 }
 
 
@@ -520,17 +753,90 @@ func (s *Service) CalculateAttendanceStats() (*types.AttendanceStats, error) {
 		targetDays = 2.5
 	}
 
+	// Calculate Average Percent
+	averagePercent := 0.0
+	if targetDays > 0 {
+		averagePercent = (averageDays / targetDays) * 100
+	}
+
 	return &types.AttendanceStats{
-		InOfficeCount: inOfficeCount,
-		TotalDays:     totalDays,
-		Average:       average,
-		AverageDays:   averageDays,
-		TargetDays:    targetDays,
+		InOfficeCount:  inOfficeCount,
+		TotalDays:      totalDays,
+		Average:        average,
+		AverageDays:    averageDays,
+		TargetDays:     targetDays,
+		AveragePercent: averagePercent,
 	}, nil
 }
 
 
 === End of internal/domain/toggle.go ===
+
+//go:generate mockery --name RTOBLL
+package domain
+
+import (
+	"errors"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"gorm.io/gorm"
+)
+
+// TransformVacationToRemote transforms a vacation event into a remote attendance day
+func (s *Service) TransformVacationToRemote(eventID int) error {
+	// Retrieve the vacation event by ID
+	event, err := s.GetEventByID(eventID)
+	if err != nil {
+		return err // Event not found or other error
+	}
+
+	if event.Type != "vacation" {
+		return errors.New("only vacation events can be transformed into remote days")
+	}
+
+	// Delete the vacation event
+	err = s.eventRepo.DeleteEvent(eventID)
+	if err != nil {
+		s.logger.Error("Failed to delete vacation event", "eventID", eventID, "error", err)
+		return err
+	}
+
+	// Check if an attendance event exists on that date
+	existingAttendance, err := s.eventRepo.GetEventByDateAndType(event.Date, "attendance")
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// No attendance event exists; create one as remote
+			newAttendance := types.Event{
+				Date:        event.Date,
+				Description: "Remote day (transformed from vacation)",
+				Type:        "attendance",
+				IsInOffice:  false,
+			}
+			err = s.eventRepo.AddEvent(newAttendance)
+			if err != nil {
+				s.logger.Error("Failed to add new remote attendance event", "date", newAttendance.Date, "error", err)
+				return err
+			}
+		} else {
+			s.logger.Error("Error fetching attendance event by date", "date", event.Date, "error", err)
+			return err
+		}
+	} else {
+		// Update the existing attendance event to remote
+		existingAttendance.IsInOffice = false
+		existingAttendance.Description = "Remote day (transformed from vacation)"
+		err = s.eventRepo.UpdateEvent(existingAttendance)
+		if err != nil {
+			s.logger.Error("Failed to update attendance event to remote", "eventID", existingAttendance.ID, "error", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+
+=== End of internal/domain/transform.go ===
 
 package utils
 

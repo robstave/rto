@@ -39,11 +39,12 @@ type CalendarDay struct {
 }
 
 type AttendanceStats struct {
-	InOfficeCount int
-	TotalDays     int
-	Average       float64
-	AverageDays   float64
-	TargetDays    float64
+	InOfficeCount  int
+	TotalDays      int
+	Average        float64
+	AverageDays    float64
+	TargetDays     float64
+	AveragePercent float64
 }
 
 type BulkAddResult struct {
