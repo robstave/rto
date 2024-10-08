@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -39,6 +38,10 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	prevMonthDate := currentDate.AddDate(0, -1, 0)
 	nextMonthDate := currentDate.AddDate(0, 1, 0)
 
+	// Define 'today' before the loop
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
 	// Assign events to the corresponding days
 	for weekIdx, week := range weeks {
 		for dayIdx, day := range week {
@@ -53,24 +56,19 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 
 			weeks[weekIdx][dayIdx].Events = dayEvents
 
-		}
-	}
-
-	// Define 'today' before the loop
-	today := time.Now()
-	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-
-	// Assign Today Flag
-	for weekIdx, week := range weeks {
-		for dayIdx, day := range week {
 			if day.Date.Equal(today) {
 				weeks[weekIdx][dayIdx].Today = true
+			} else if day.Date.After(today) && !weeks[weekIdx][dayIdx].IsWeekend {
+				// Set IsFuture flag..but only for M-F
+				weeks[weekIdx][dayIdx].IsFuture = true
 			}
+
 		}
 	}
+
 	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
 	// Calculate In-Office Average
 	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
 
@@ -108,16 +106,18 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	}
 
 	//log
-	for weekIdx, week := range weeks {
-		for dayIdx, day := range week {
-			// Existing event assignment logic
+	/*
+		for weekIdx, week := range weeks {
+			for dayIdx, day := range week {
+				// Existing event assignment logic
 
-			// Debugging: Log events for each day
-			if len(weeks[weekIdx][dayIdx].Events) > 0 {
-				log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+				// Debugging: Log events for each day
+				if len(weeks[weekIdx][dayIdx].Events) > 0 {
+					log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+				}
 			}
 		}
-	}
+	*/
 
 	ctlr.logger.Info("***********", "Average", average, "TotalDays", totalDays)
 

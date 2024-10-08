@@ -23,7 +23,8 @@
     <!-- Navigation Links with Current Month and Year -->
     <div class="navigation">
         <!-- Previous Month -->
-        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous Month</a>
+        <a href="/?year={{.PrevMonth.year}}&month={{.PrevMonth.month}}&day={{.PrevMonth.day}}">&laquo; Previous
+            Month</a>
 
         <!-- Current Month -->
         <span class="current-month">{{.CurrentDate.Format "January 2006"}}</span>
@@ -35,7 +36,7 @@
     <!-- Display In-Office Average -->
     <div class="attendance-average" style="text-align: center; margin-bottom: 120px;">
 
- 
+
         <div class="progress-bar-container">
             <div class="progress-bar">
                 <div id="progress-fill" class="progress-fill"></div>
@@ -45,11 +46,13 @@
                 </div>
             </div>
         </div>
-        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per Week</h3>
-        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}} </p>
+        <h3 id="average-days">bbb In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
+            Week</h3>
+        <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}}
+        </p>
 
     </div>
- 
+
 
     <!-- Legend -->
     <div class="legend">
@@ -84,9 +87,11 @@
         {{range .Weeks}}
         <tr>
             {{range .}}
+
             <td class="
                 {{if not .InMonth}}not-current-month{{end}} 
                 {{if .Today}}today{{end}} 
+                {{if .IsFuture}}future-day{{end}}
                 {{if .IsWeekend}}weekend{{end}}">
                 <div>{{.Date.Day}}</div>
                 {{if .Events}}
@@ -100,7 +105,8 @@
                     <span class="toggle-attendance {{if .IsInOffice}}event-in-office{{else}}event-remote{{end}}"
                         data-date="{{.Date.Format "2006-01-02"}}"
                         data-status="{{if .IsInOffice}}in{{else}}remote{{end}}">
-                        {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i class="fa-solid fa-home"></i> Remote{{end}}
+                        {{if .IsInOffice}}<i class="fa-solid fa-building"></i> In Office{{else}}<i
+                            class="fa-solid fa-home"></i> Remote{{end}}
                     </span>
                     {{end}}
                     {{end}}
@@ -114,30 +120,62 @@
 
     <!-- Action Buttons -->
     <div class="action-buttons" style="text-align: center; margin: 20px 0;">
-        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add Event</button>
+        <button onclick="window.location.href='/add-event'" style="padding: 10px 20px; margin-right: 10px;">Add
+            Event</button>
         <button onclick="window.location.href='/events'" style="padding: 10px 20px; margin-right: 10px;">Events</button>
         <button onclick="window.location.href='/prefs'" style="padding: 10px 20px; margin-right: 10px;">Prefs</button>
         <!-- **New Export Button** -->
-        <button onclick="window.location.href='/export/markdown'" style="padding: 10px 20px;">Export as Markdown</button>
+        <button onclick="window.location.href='/export/markdown'" style="padding: 10px 20px;">Export as
+            Markdown</button>
     </div>
+
+
+ <!-- Modal Structure -->
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Manage Events for <span id="modalDate"></span></h2>
+        <form id="eventForm">
+            <div style="margin-bottom: 15px;">
+                <button type="button" id="clearEventsButton" class="action-button clear-button">Clear All Events</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <h3>Add Vacation Day</h3>
+                <input type="text" id="vacationDescription" placeholder="Description" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+                <button type="button" id="submitVacationButton" class="action-button add-vacation-button">Add Vacation</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <h3>Add Attendance Day</h3>
+ 
+                <button type="button" id="submitAttendanceButton" class="action-button add-attendance-button">Add Attendance</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
 
     <!-- JavaScript for Toggling Attendance and Updating Progress Bar -->
     <script>
         $(document).ready(function () {
 
             // Define total days (e.g., 7 for a week)
-        var totalDays = 7;
-        var ticksContainer = $('#ticks-container');
-        // Function to create tick marks
-function createTicks(total) {
-    for (var i = 1; i <= total; i++) {
-        var leftPercent = (i / total) * 100; // Calculate position
-        var tick = $('<div class="tick"></div>').css('left', leftPercent + '%');
-        var label = $('<span class="tick-label">' + i  + '</span>');
-        tick.append(label); // Nest label inside tick
-        ticksContainer.append(tick);
-    }
-}
+            var totalDays = 7;
+            var ticksContainer = $('#ticks-container');
+
+
+            // Function to create tick marks
+            function createTicks(total) {
+                for (var i = 1; i <= total; i++) {
+                    var leftPercent = (i / total) * 100; // Calculate position
+                    var tick = $('<div class="tick"></div>').css('left', leftPercent + '%');
+                    var label = $('<span class="tick-label">' + i + '</span>');
+                    tick.append(label); // Nest label inside tick
+                    ticksContainer.append(tick);
+                }
+            }
 
 
 
@@ -145,82 +183,239 @@ function createTicks(total) {
 
 
             // Function to initialize the progress bar
-            function initializeProgressBar(averagePercent,targetDays) {
+            function initializeProgressBar(averagePercent, targetDays) {
                 $('#progress-fill').css('width', averagePercent + '%');
                 $('#progress-percent').text(averagePercent + '% In Office');
-                
+
 
                 // color is determined by 2 rules
                 // 2 and under is red...bad
                 // A targetDays is in the prefs.  Some folks target 2.5 days
                 // under the target is yellow.  Above is Green
-                if ((averagePercent * 7.0/100.0) < 2) {
+                if ((averagePercent * 7.0 / 100.0) < 2) {
                     $('#progress-fill').css('background-color', '#F44336'); // Red
-                } else if ((averagePercent * 7.0/100.0) < targetDays) {
+                } else if ((averagePercent * 7.0 / 100.0) < targetDays) {
                     $('#progress-fill').css('background-color', '#FFC107'); // Yellow
                 } else {
                     $('#progress-fill').css('background-color', '#4CAF50'); // Green
                 }
             }
 
-            
+
             // Initialize Progress Bar on Page Load
-       
-              var initialAverage = {{ printf "%.2f" .Average }};
+
+            var initialAverage = {{ printf "%.2f" .Average }};
             var targetDays = {{ printf "%.2f" .TargetDays }};
-           
-            initializeProgressBar(initialAverage, targetDays);
-            createTicks(totalDays);
 
-            // Handle click on attendance toggle
-            $('.toggle-attendance').on('click', function () {
-                var span = $(this);
-                var date = span.data('date');
-                var currentStatus = span.data('status'); // 'in' or 'remote'
+        initializeProgressBar(initialAverage, targetDays);
+        createTicks(totalDays);
 
-                // Send AJAX POST request to toggle attendance
-                $.ajax({
-                    url: '/toggle-attendance',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ date: date }),
-                    success: function (response) {
-                        if (response.success) {
-                            console.log("Success:", response);
-                            // Update the span's class and text
-                            if (response.newStatus === 'in') {
-                                span.removeClass('event-remote').addClass('event-in-office');
-                                span.html('<i class="fa-solid fa-building"></i> In Office');
-                                span.data('status', 'in');
-                            } else {
-                                span.removeClass('event-in-office').addClass('event-remote');
-                                span.html('<i class="fa-solid fa-home"></i> Remote');
-                                span.data('status', 'remote');
-                            }
+        // Handle click on attendance toggle
+        $('.toggle-attendance').on('click', function () {
+            var span = $(this);
+            var date = span.data('date');
+            var currentStatus = span.data('status'); // 'in' or 'remote'
 
-                            // Update counts and averages
-                            var averageDays = parseFloat(response.averageDays).toFixed(2);
-                            var targetDays = parseFloat(response.targetDays).toFixed(2);
-                            var inOfficeCount = response.inOfficeCount;
-                            var totalDays = response.totalDays;
-                            var averagePercent = ((parseFloat(inOfficeCount) / parseFloat(totalDays)) * 100).toFixed(2);
-
-                            $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + averageDays + ' Days per Week');
-                            $('#counts').text('In-Office Days: ' + inOfficeCount + ' / Total Days: ' + totalDays  + ' / Target Days: ' + targetDays);
-                            initializeProgressBar(averagePercent,targetDays);
-
-                            // Optionally, show a success message using Toastr
-                            toastr.success('Attendance status updated successfully.');
+            // Send AJAX POST request to toggle attendance
+            $.ajax({
+                url: '/toggle-attendance',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ date: date }),
+                success: function (response) {
+                    if (response.success) {
+                        console.log("Success:", response);
+                        // Update the span's class and text
+                        if (response.newStatus === 'in') {
+                            span.removeClass('event-remote').addClass('event-in-office');
+                            span.html('<i class="fa-solid fa-building"></i> In Office');
+                            span.data('status', 'in');
                         } else {
-                            // Optionally, show an error message using Toastr
-                            toastr.error('Failed to update attendance status: ' + response.message);
+                            span.removeClass('event-in-office').addClass('event-remote');
+                            span.html('<i class="fa-solid fa-home"></i> Remote');
+                            span.data('status', 'remote');
                         }
-                    },
-                    error: function () {
-                        toastr.error('An error occurred while updating attendance status.');
+
+                        // Update counts and averages
+                        var averageDays = parseFloat(response.averageDays).toFixed(2);
+                        var targetDays = parseFloat(response.targetDays).toFixed(2);
+                        var inOfficeCount = response.inOfficeCount;
+                        var totalDays = response.totalDays;
+                        var averagePercent = ((parseFloat(inOfficeCount) / parseFloat(totalDays)) * 100).toFixed(2);
+
+                        $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + averageDays + ' Days per Week');
+                        $('#counts').text('In-Office Days: ' + inOfficeCount + ' / Total Days: ' + totalDays + ' / Target Days: ' + targetDays);
+                        initializeProgressBar(averagePercent, targetDays);
+
+                        // Optionally, show a success message using Toastr
+                        toastr.success('Attendance status updated successfully.');
+                    } else {
+                        // Optionally, show an error message using Toastr
+                        toastr.error('Failed to update attendance status: ' + response.message);
                     }
-                });
+                },
+                error: function () {
+                    toastr.error('An error occurred while updating attendance status.');
+                }
             });
+
+
+        });
+
+
+
+            // Modal Elements
+            var modal = $('#eventModal');
+            var closeButton = $('.close-button');
+            var modalDateSpan = $('#modalDate');
+
+            // Variables to hold the selected date
+            var selectedDate = '';
+
+            // Function to open modal
+            function openModal(date) {
+                selectedDate = date;
+                modalDateSpan.text(date);
+                modal.show();
+            }
+
+            // Function to close modal
+            function closeModal() {
+                modal.hide();
+            }
+
+            // When the user clicks on <span> (x), close the modal
+            closeButton.on('click', function () {
+                closeModal();
+            });
+
+            // When the user clicks anywhere outside of the modal, close it
+            $(window).on('click', function (event) {
+                if ($(event.target).is(modal)) {
+                    closeModal();
+                }
+            });
+
+            // Handle click on calendar cells
+            $('.calendar td').on('click', function (e) {
+
+                console.log("cleeeeeek")
+                // Prevent triggering when clicking on toggle-attendance
+                if ($(e.target).hasClass('toggle-attendance') || $(e.target).parents('.toggle-attendance').length > 0) {
+                    return;
+                }
+
+
+                var dateText = $(this).find('div').first().text().trim();
+                var monthYearText = $('.current-month').text().trim(); // e.g., "October 2024"
+    
+                 // Split month and year
+    var parts = monthYearText.split(" ");
+    if(parts.length !== 2){
+        toastr.error('Invalid month and year format.');
+        return;
+    }
+    
+    var month = parts[0];
+    var year = parts[1];
+    
+    // Construct a valid date string
+    var dateString = month + ' ' + dateText + ', ' + year; // e.g., "October 7, 2024"
+    var dateObj = new Date(dateString);
+
+    // Validate the constructed date
+    if (isNaN(dateObj.getTime())) {
+        toastr.error('Invalid date constructed: ' + dateString);
+        return;
+    }
+
+    var formattedDate = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+    openModal(formattedDate);
+            });
+
+            // Handle Clear All Events Button
+            $('#clearEventsButton').on('click', function () {
+                if (confirm('Are you sure you want to clear all events for this day?')) {
+                    $.ajax({
+                        url: '/events/clear/' + selectedDate,
+                        method: 'DELETE',
+                        success: function (response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                // Reload the page to reflect changes
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 200);
+                            } else {
+                                toastr.error('Failed to clear events: ' + response.message);
+                            }
+                        },
+                        error: function () {
+                            toastr.error('An error occurred while clearing events.');
+                        }
+                    });
+                }
+            });
+ 
+
+        // Handle Submit Vacation Button
+        $('#submitVacationButton').on('click', function () {
+            var description = $('#vacationDescription').val().trim();
+            if (description === "") {
+                toastr.error('Please enter a description for the vacation day.');
+                return;
+            }
+
+            $.ajax({
+                url: '/add-event',
+                method: 'POST',
+                data: {
+                    date: selectedDate,
+                    type: 'vacation',
+                    description: description
+                },
+                success: function (response) {
+                    toastr.success('Vacation day added successfully.');
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 700);
+                },
+                error: function () {
+                    toastr.error('An error occurred while adding vacation day.');
+                }
+            });
+        });
+
+        // Handle Submit Attendance Button
+        $('#submitAttendanceButton').on('click', function () {
+           console.log("submitAttendanceButton")
+
+            var description =   'In Office' ;
+
+            $.ajax({
+                url: '/add-event',
+                method: 'POST',
+                data: {
+                    date: selectedDate,
+                    type: 'attendance',
+                    isInOffice: true,
+                    description: 'In Office'
+                },
+                success: function (response) {
+                    toastr.success('Attendance day added successfully.');
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 700);
+                },
+                error: function () {
+                    toastr.error('An error occurred while adding attendance day.');
+                }
+            });
+        });
+        
+
+
+            
         });
     </script>
 </body>

@@ -71,8 +71,9 @@ func GetCalendarMonth(currentDate time.Time) [][]types.CalendarDay {
 			currentDay := startDate.AddDate(0, 0, week*7+day)
 			inMonth := currentDay.Month() == firstOfMonth.Month()
 			weekDays = append(weekDays, types.CalendarDay{
-				Date:    currentDay,
-				InMonth: inMonth,
+				Date:      currentDay,
+				InMonth:   inMonth,
+				IsWeekend: IsWeekend(currentDay),
 			})
 		}
 		weeks = append(weeks, weekDays)
@@ -93,4 +94,15 @@ func GetCalendarMonth(currentDate time.Time) [][]types.CalendarDay {
 	}
 
 	return weeks
+}
+
+// IsWeekend returns true if the given date is Saturday or Sunday
+func IsWeekend(date time.Time) bool {
+	weekday := date.Weekday()
+	return weekday == time.Saturday || weekday == time.Sunday
+}
+
+// NormalizeDate sets the time component of a date to midnight UTC
+func NormalizeDate(date time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 }

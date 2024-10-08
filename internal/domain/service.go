@@ -22,6 +22,9 @@ type RTOBLL interface {
 	GetEventByID(eventID int) (types.Event, error)
 	TransformVacationToRemote(eventID int) error
 	GetEventByDateAndType(date time.Time, eventType string) (*types.Event, error)
+	GetEventsByDate(date time.Time) ([]types.Event, error)
+	ClearEventsForDate(date time.Time) error
+
 	UpdateEvent(event types.Event) error
 	BulkAddEvents(events []types.Event) (*types.BulkAddResponse, error)
 }

@@ -25,7 +25,6 @@ func (ctlr *RTOController) ShowAddEventForm(c echo.Context) error {
 	return c.Render(http.StatusOK, "add_event.html", nil)
 }
 
-// AddEvent handles the addition of new events via form submission
 func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	dateStr := c.FormValue("date")   // Expected format: YYYY-MM-DD
 	eventType := c.FormValue("type") // "holiday", "vacation", "attendance"
@@ -33,14 +32,20 @@ func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	isInOfficeStr := c.FormValue("isInOffice") // "true" or "false"
 
 	if dateStr == "" || eventType == "" {
-		return c.String(http.StatusBadRequest, "Date and Event Type are required")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Date and Event Type are required",
+		})
 	}
 
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		ctlr.logger.Error("Error parsing date", "fn", "AddEvent", "date", err)
-		return c.String(http.StatusBadRequest, "Invalid date format")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Invalid date format",
+		})
 	}
 
 	// Initialize Event struct
@@ -63,11 +68,35 @@ func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	err = ctlr.service.AddEvent(newEvent)
 	if err != nil {
 		ctlr.logger.Error("Error adding event", "error", err)
-		return c.String(http.StatusInternalServerError, "Failed to add event.")
+		// Check if the error is due to an existing attendance event
+		// You can define custom errors in the service layer to handle this
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "Failed to add event.",
+		})
 	}
 
-	// Redirect back to the calendar
-	return c.Redirect(http.StatusSeeOther, "/")
+	// Determine the nature of the addition to provide appropriate feedback
+	var message string
+	if eventType == "vacation" {
+		// Check if the description was updated or a new event was added
+		existingEvent, err := ctlr.service.GetEventByDateAndType(eventDate, "vacation")
+		if err == nil && existingEvent.ID != 0 && existingEvent.Description == description {
+			message = "Vacation event updated successfully."
+		} else {
+			message = "Vacation event added successfully."
+		}
+	} else if eventType == "attendance" {
+		// Since attendance events are not duplicated, confirm addition
+		message = "Attendance event added successfully."
+	} else {
+		message = "Event added successfully."
+	}
+
+	// Redirect back to the calendar with a success message
+	return c.Render(http.StatusOK, "home.html", map[string]interface{}{
+		"Message": message,
+	})
 }
 
 func (ctlr *RTOController) AddDefaultDays(c echo.Context) error {
@@ -159,4 +188,68 @@ func (ctlr *RTOController) BulkAddEventsJSON(c echo.Context) error {
 
 	// Return the service layer's response
 	return c.JSON(http.StatusOK, response)
+}
+
+// ClearEventsForDate handles clearing all events for a specific date
+func (ctlr *RTOController) ClearEventsForDate(c echo.Context) error {
+	dateParam := c.Param("date") // Expected format: YYYY-MM-DD
+
+	if dateParam == "" {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Date parameter is required.",
+		})
+	}
+
+	// Parse the date
+	eventDate, err := time.Parse("2006-01-02", dateParam)
+	if err != nil {
+		ctlr.logger.Error("Error parsing date", "fn", "ClearEventsForDate", "date", dateParam, "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Invalid date format. Expected YYYY-MM-DD.",
+		})
+	}
+	ctlr.logger.Info("-----delete------")
+
+	// Retrieve all events for the date
+	err = ctlr.service.ClearEventsForDate(eventDate)
+	if err != nil {
+		ctlr.logger.Error("Error fetching events for date", "date", eventDate, "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "Failed to fetClearch events for the date.",
+		})
+	}
+	/*
+		// Retrieve all events for the date
+		events, err := ctlr.service.GetEventsByDate(eventDate)
+		if err != nil {
+			ctlr.logger.Error("Error fetching events for date", "date", eventDate, "error", err)
+			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+				"success": false,
+				"message": "Failed to fetch events for the date.",
+			})
+		}
+		ctlr.logger.Info("-----delete------", "len", len(events))
+
+		// Delete each event
+		for _, event := range events {
+			ctlr.logger.Info("-----deleting------", "id", len(events))
+
+			err := ctlr.service.DeleteEvent(int(event.ID))
+			if err != nil {
+				ctlr.logger.Error("Error deleting event", "eventID", event.ID, "error", err)
+				return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+					"success": false,
+					"message": "Failed to delete some events.",
+				})
+			}
+		}
+	*/
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "All events for the selected date have been cleared.",
+	})
 }

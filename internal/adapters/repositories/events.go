@@ -23,6 +23,7 @@ func (r *EventRepositorySQLite) UpdateEvent(event types.Event) error {
 }
 
 func (r *EventRepositorySQLite) DeleteEvent(eventID int) error {
+
 	result := r.db.Delete(&types.Event{}, eventID)
 	return result.Error
 }

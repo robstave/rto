@@ -7,10 +7,10 @@ import (
 
 type Event struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
-	Date        time.Time `json:"date"`
-	Description string    `json:"description"`
-	IsInOffice  bool      `json:"isInOffice"`
-	Type        string    `json:"type"` // "attendance", "holiday", "vacation"
+	Date        time.Time `gorm:"type:date;not null"` // Use 'date' type to store only the date
+	Description string    `gorm:"type:varchar(255);not null"`
+	Type        string    `gorm:"type:varchar(50);not null"` // "holiday", "vacation", "attendance"
+	IsInOffice  bool      `gorm:"default:false"`             // Relevant for "attendance" type
 }
 
 func (e Event) String() string {
@@ -34,7 +34,8 @@ type CalendarDay struct {
 	InMonth   bool
 	Today     bool
 	Events    []Event
-	IsWeekend bool // New field to indicate weekends
+	IsWeekend bool //
+	IsFuture  bool // future days
 
 }
 

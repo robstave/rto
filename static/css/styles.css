@@ -131,28 +131,33 @@ p {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to pass through */
-    z-index: 2; /* Higher z-index to ensure visibility above progress-fill */
+    pointer-events: none;
+    /* Allows clicks to pass through */
+    z-index: 2;
+    /* Higher z-index to ensure visibility above progress-fill */
 }
 
 .tick {
     position: absolute;
-    top: -5px; /* Adjust to position tick correctly */
+    top: -5px;
+    /* Adjust to position tick correctly */
     width: 1px;
     height: 10px;
-    background-color: #000; /* Ensure contrast */
+    background-color: #000;
+    /* Ensure contrast */
 }
 
 .tick-label {
     position: absolute;
-    top: 12px; /* Position below the tick */
+    top: 12px;
+    /* Position below the tick */
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
     color: #000;
 }
- 
- 
+
+
 /* Attendance Chart */
 .attendance-chart {
     width: 100%;
@@ -277,10 +282,10 @@ p {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.calendar th  {
+.calendar th {
     width: 14.28%;
-    
-   
+
+
     vertical-align: top;
     border: 1px solid var(--color-border);
     padding: 10px !important;
@@ -294,7 +299,7 @@ p {
 }
 
 
- 
+
 
 .calendar td.not-current-month {
     color: #a0a0a0;
@@ -336,10 +341,11 @@ p {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: inline-block; /* Ensures the background color wraps the text */
+    display: inline-block;
+    /* Ensures the background color wraps the text */
 }
 
- 
+
 
 .event-holiday {
     background-color: var(--color-holiday);
@@ -491,6 +497,9 @@ button:hover {
     transform: scale(1.05);
 }
 
+
+
+
 /* Weekend Styling */
 .weekend {
     background-color: #d3d3d3;
@@ -512,7 +521,15 @@ button:hover {
     /* Slightly faded to indicate non-interactive */
 }
 
+/* Future Day Styling */
+.future-day {
+    background-color: #e3f2fd; /* Light blue */
+    /* You can adjust the color as needed */
+}
 
+.future-day:hover {
+    background-color: #bbdefb; /* Slightly darker on hover */
+}
 
 /* Attendance Chart Tooltip (Optional) */
 .chart-tooltip {
@@ -567,15 +584,15 @@ button:hover {
     border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
     background-color: var(--color-in-office);
 }
 
-input:focus + .slider {
+input:focus+.slider {
     box-shadow: 0 0 1px var(--color-in-office);
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
     transform: translateX(26px);
 }
 
@@ -631,7 +648,8 @@ input:checked + .slider:before {
 .delete-button {
     background: none;
     border: none;
-    color: #f44336; /* Red color */
+    color: #f44336;
+    /* Red color */
     cursor: pointer;
     font-size: 1em;
     padding: 4px;
@@ -639,14 +657,100 @@ input:checked + .slider:before {
 }
 
 .delete-button:hover {
-    color: #d32f2f; /* Darker red on hover */
+    color: #d32f2f;
+    /* Darker red on hover */
 }
 
 .delete-button:focus {
     outline: none;
 }
 
- 
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 2000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: var(--color-background);
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px;
+    border-radius: 8px;
+    position: relative;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+}
+
+
+
+
+.action-button {
+    padding: 10px 20px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.clear-button {
+    background-color: #F44336; /* Red */
+}
+
+.clear-button:hover {
+    background-color: #d32f2f; /* Darker red */
+    transform: translateY(-2px);
+}
+
+.add-vacation-button {
+    background-color: #9C27B0; /* Purple */
+}
+
+.add-vacation-button:hover {
+    background-color: #7B1FA2; /* Darker purple */
+    transform: translateY(-2px);
+}
+
+.add-attendance-button {
+    background-color: #4CAF50; /* Green */
+}
+
+.add-attendance-button:hover {
+    background-color: #388E3C; /* Darker green */
+    transform: translateY(-2px);
+}
+
+
+
 
 /* Toastr Overrides (Optional for better visibility) */
 .toastr-success {

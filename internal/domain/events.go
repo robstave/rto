@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
 	"gorm.io/gorm"
 )
 
@@ -27,12 +28,83 @@ func (s *Service) GetPrefs() types.Preferences {
 	return prefs
 }
 
+// AddEvent adds a new event or updates an existing one based on the event type and date
 func (s *Service) AddEvent(event types.Event) error {
+
+	event.Date = utils.NormalizeDate(event.Date)
+
+	if event.Type == "vacation" {
+		// Check if a vacation event already exists on the given date
+		existingEvent, err := s.eventRepo.GetEventByDateAndType(event.Date, "vacation")
+		if err != nil && err != gorm.ErrRecordNotFound {
+			s.logger.Error("Error fetching existing vacation event", "error", err)
+			return err
+		}
+
+		if existingEvent.ID != 0 {
+			// Vacation event exists; update the description
+			existingEvent.Description = event.Description
+			err = s.eventRepo.UpdateEvent(existingEvent)
+			if err != nil {
+				s.logger.Error("Error updating vacation event", "error", err)
+				return err
+			}
+			s.logger.Info("Vacation event updated", "date", event.Date)
+			return nil
+		}
+	} else if event.Type == "attendance" {
+		s.logger.Info("ADding Attendence", "date", event.Date, "type", event.Type)
+
+		// Check if an attendance event already exists on the given date
+		existingEvent, err := s.eventRepo.GetEventByDateAndType(event.Date, "attendance")
+		if err != nil && err != gorm.ErrRecordNotFound {
+			s.logger.Error("Error fetching existing attendance event", "error", err)
+			return err
+		}
+
+		s.logger.Info("doing add", "existingEvent", existingEvent.ID)
+
+		if existingEvent.ID != 0 {
+			// Attendance event exists; do not add a duplicate
+			s.logger.Info("Attendance event already exists", "date", event.Date.Format("2006-01-02"))
+			return nil // Alternatively, return a custom error if you want to notify the controller
+		}
+	}
+
+	s.logger.Info("doing add", "date", event.Date, "type", event.Type)
+
+	// No existing event; proceed to add the new event
 	err := s.eventRepo.AddEvent(event)
 	if err != nil {
 		s.logger.Error("Error adding event", "error", err)
+		return err
 	}
-	return err
+	s.logger.Info("Event added", "date", event.Date.Format("2006-01-02"), "type", event.Type)
+	return nil
+}
+
+// ClearEventsForDate clears all events for a specific date
+func (s *Service) ClearEventsForDate(date time.Time) error {
+	events, err := s.eventRepo.GetEventsByDate(date)
+	s.logger.Info("0000-----ClearEventsForDate------", "date", date, "len", len(events))
+
+	if err != nil {
+		s.logger.Error("Error fetching events for date", "date", date, "error", err)
+		return err
+	}
+
+	for _, event := range events {
+		s.logger.Info("000bbbb0-----deletin------", "len", int(event.ID))
+
+		err := s.eventRepo.DeleteEvent(int(event.ID))
+		if err != nil {
+			s.logger.Error("Error deleting event", "eventID", event.ID, "error", err)
+			return err
+		}
+	}
+
+	s.logger.Info("All events cleared for date", "date", date.Format("2006-01-02"))
+	return nil
 }
 
 func (s *Service) AddDefaultDays() error {
@@ -55,8 +127,9 @@ func (s *Service) AddDefaultDays() error {
 
 	// Define the date range
 	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
+
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
 
 	// Retrieve existing events
 	existingEvents, err := s.eventRepo.GetAllEvents()
@@ -138,14 +211,14 @@ func (s *Service) GetEventByID(eventID int) (types.Event, error) {
 // DeleteEvent deletes an event by its ID
 func (s *Service) DeleteEvent(eventID int) error {
 	// First, retrieve the event to ensure it exists and is deletable
-	event, err := s.GetEventByID(eventID)
+	_, err := s.GetEventByID(eventID)
 	if err != nil {
 		return err
 	}
 
-	if event.Type != "vacation" {
-		return errors.New("only vacation events can be deleted")
-	}
+	////if event.Type != "vacation" {
+	//return errors.New("only vacation events can be deleted")
+	//}
 
 	// Proceed to delete the event
 	err = s.eventRepo.DeleteEvent(eventID)
@@ -180,4 +253,14 @@ func (s *Service) GetEventByDateAndType(date time.Time, eventType string) (*type
 		return nil, err
 	}
 	return &event, nil
+}
+
+// GetEventsByDate retrieves all events for a specific date
+func (s *Service) GetEventsByDate(date time.Time) ([]types.Event, error) {
+	events, err := s.eventRepo.GetEventsByDate(date)
+	if err != nil {
+		s.logger.Error("Error fetching events by date", "date", date, "error", err)
+		return nil, err
+	}
+	return events, nil
 }

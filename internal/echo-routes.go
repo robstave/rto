@@ -35,6 +35,9 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
 	e.POST("/add-events-json", rtoCtl.BulkAddEventsJSON)
 
+	// Register the new route for clearing all events on a date
+	e.DELETE("/events/clear/:date", rtoCtl.ClearEventsForDate)
+
 	// **New Route for Exporting Events as Markdown**
 	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
 

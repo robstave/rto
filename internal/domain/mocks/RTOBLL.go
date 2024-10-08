@@ -89,6 +89,20 @@ func (_m *RTOBLL) CalculateAttendanceStats() (*types.AttendanceStats, error) {
 	return r0, r1
 }
 
+// ClearEventsForDate provides a mock function with given fields: date
+func (_m *RTOBLL) ClearEventsForDate(date time.Time) error {
+	ret := _m.Called(date)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(time.Time) error); ok {
+		r0 = rf(date)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteEvent provides a mock function with given fields: eventID
 func (_m *RTOBLL) DeleteEvent(eventID int) error {
 	ret := _m.Called(eventID)
@@ -156,6 +170,29 @@ func (_m *RTOBLL) GetEventByID(eventID int) (types.Event, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(eventID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetEventsByDate provides a mock function with given fields: date
+func (_m *RTOBLL) GetEventsByDate(date time.Time) ([]types.Event, error) {
+	ret := _m.Called(date)
+
+	var r0 []types.Event
+	if rf, ok := ret.Get(0).(func(time.Time) []types.Event); ok {
+		r0 = rf(date)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.Event)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(time.Time) error); ok {
+		r1 = rf(date)
 	} else {
 		r1 = ret.Error(1)
 	}

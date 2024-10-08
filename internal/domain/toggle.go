@@ -33,6 +33,9 @@ func (s *Service) ToggleAttendance(eventDate time.Time) (string, error) {
 				newStatus = "remote"
 			}
 			found = true
+
+			s.logger.Info("xmxmxmx Toggle", "Date", event.Date, "ID", event.ID)
+
 			break
 		}
 	}
@@ -54,8 +57,10 @@ func (s *Service) ToggleAttendance(eventDate time.Time) (string, error) {
 // CalculateAttendanceStats calculates all the stats
 func (s *Service) CalculateAttendanceStats() (*types.AttendanceStats, error) {
 	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
+
+	// normalize ?
 
 	allTheEvents, err := s.eventRepo.GetAllEvents()
 	if err != nil {
