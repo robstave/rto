@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -21,6 +22,10 @@ func (ctlr *RTOController) ExportEventsMarkdown(c echo.Context) error {
 
 	// Build the Markdown content
 	var sb strings.Builder
+	// Add Export Date
+	exportDate := time.Now().Format("January 2, 2006 at 3:04 PM")
+	sb.WriteString(fmt.Sprintf("**Exported on:** %s\n\n", exportDate))
+
 	sb.WriteString("# RTO Attendance Tracker - Events Export\n\n")
 	sb.WriteString("## Events List\n\n")
 	sb.WriteString("| Date | Type | Description | In Office |\n")
