@@ -210,7 +210,6 @@ func (ctlr *RTOController) ClearEventsForDate(c echo.Context) error {
 			"message": "Invalid date format. Expected YYYY-MM-DD.",
 		})
 	}
-	ctlr.logger.Info("-----delete------")
 
 	// Retrieve all events for the date
 	err = ctlr.service.ClearEventsForDate(eventDate)
@@ -221,32 +220,6 @@ func (ctlr *RTOController) ClearEventsForDate(c echo.Context) error {
 			"message": "Failed to fetClearch events for the date.",
 		})
 	}
-	/*
-		// Retrieve all events for the date
-		events, err := ctlr.service.GetEventsByDate(eventDate)
-		if err != nil {
-			ctlr.logger.Error("Error fetching events for date", "date", eventDate, "error", err)
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-				"success": false,
-				"message": "Failed to fetch events for the date.",
-			})
-		}
-		ctlr.logger.Info("-----delete------", "len", len(events))
-
-		// Delete each event
-		for _, event := range events {
-			ctlr.logger.Info("-----deleting------", "id", len(events))
-
-			err := ctlr.service.DeleteEvent(int(event.ID))
-			if err != nil {
-				ctlr.logger.Error("Error deleting event", "eventID", event.ID, "error", err)
-				return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-					"success": false,
-					"message": "Failed to delete some events.",
-				})
-			}
-		}
-	*/
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"success": true,
