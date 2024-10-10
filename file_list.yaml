@@ -9,6 +9,7 @@ con-adapters:
   - internal/adapters/controller/delete.go
   - internal/adapters/controller/events.go
   - internal/adapters/controller/export.go
+  - internal/adapters/controller/holidays.go
   - internal/adapters/controller/home.go
   - internal/adapters/controller/prefs.go
   - internal/adapters/controller/toggle.go
@@ -36,6 +37,5 @@ con-templates:
   - templates/home.html
   - templates/events.html
   - templates/prefs.html
-  - templates/add_event.html
 
 # Add more groups as needed

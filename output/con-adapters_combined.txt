@@ -1,17 +1,11 @@
 package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log/slog"
-	"path/filepath"
-
-	"os"
 
 	repo "github.com/robstave/rto/internal/adapters/repositories"
 	"github.com/robstave/rto/internal/domain"
 	"github.com/robstave/rto/internal/domain/types"
-	"github.com/robstave/rto/internal/utils"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -74,72 +68,6 @@ func NewRTOController(
 
 func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL) *RTOController {
 	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
-}
-
-func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
-	// Load holidays from JSON file
-	holidaysPath := filepath.Join("static", "holidays.json")
-	file, err := os.Open(holidaysPath)
-	if err != nil {
-		logger.Error("Failed to open holidays.json", "error", err)
-		return err
-	}
-	defer file.Close()
-
-	byteValue, err := ioutil.ReadAll(file)
-	if err != nil {
-		logger.Error("Failed to read holidays.json", "error", err)
-		return err
-	}
-
-	// Define a temporary struct for unmarshaling
-	type RawHoliday struct {
-		Date        string `json:"date"`
-		Description string `json:"description"`
-		Type        string `json:"type"`       // e.g., "holiday", "vacation"
-		IsInOffice  bool   `json:"isInOffice"` // Optional
-	}
-
-	var rawHolidays []RawHoliday
-	if err := json.Unmarshal(byteValue, &rawHolidays); err != nil {
-		logger.Error("Failed to parse holidays.json", "error", err)
-		return err
-	}
-
-	// Insert holidays into the database if they don't already exist
-	for _, rawHoliday := range rawHolidays {
-		// Parse date
-		date, err := utils.ParseDate(rawHoliday.Date)
-		if err != nil {
-			logger.Error("Invalid date in holidays.json", "date", rawHoliday.Date, "error", err)
-			continue
-		}
-
-		// Create an Event
-		holiday := types.Event{
-			Date:        date,
-			Description: rawHoliday.Description,
-			Type:        rawHoliday.Type,
-			IsInOffice:  false, // Holidays override attendance
-		}
-
-		// Check if the holiday already exists
-		var count int64
-		db.Model(&types.Event{}).
-			Where("date = ? AND type = ?", date, holiday.Type).
-			Count(&count)
-
-		if count == 0 {
-			// Insert holiday
-			if err := db.Create(&holiday).Error; err != nil {
-				logger.Error("Failed to insert holiday", "date", date, "error", err)
-			} else {
-				logger.Info("Inserted holiday", "date", date, "name", holiday.Description)
-			}
-		}
-	}
-
-	return nil
 }
 
 
@@ -214,7 +142,6 @@ func (ctlr *RTOController) ShowAddEventForm(c echo.Context) error {
 	return c.Render(http.StatusOK, "add_event.html", nil)
 }
 
-// AddEvent handles the addition of new events via form submission
 func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	dateStr := c.FormValue("date")   // Expected format: YYYY-MM-DD
 	eventType := c.FormValue("type") // "holiday", "vacation", "attendance"
@@ -222,14 +149,20 @@ func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	isInOfficeStr := c.FormValue("isInOffice") // "true" or "false"
 
 	if dateStr == "" || eventType == "" {
-		return c.String(http.StatusBadRequest, "Date and Event Type are required")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Date and Event Type are required",
+		})
 	}
 
 	// Parse the date
 	eventDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		ctlr.logger.Error("Error parsing date", "fn", "AddEvent", "date", err)
-		return c.String(http.StatusBadRequest, "Invalid date format")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Invalid date format",
+		})
 	}
 
 	// Initialize Event struct
@@ -252,11 +185,35 @@ func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	err = ctlr.service.AddEvent(newEvent)
 	if err != nil {
 		ctlr.logger.Error("Error adding event", "error", err)
-		return c.String(http.StatusInternalServerError, "Failed to add event.")
+		// Check if the error is due to an existing attendance event
+		// You can define custom errors in the service layer to handle this
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "Failed to add event.",
+		})
 	}
 
-	// Redirect back to the calendar
-	return c.Redirect(http.StatusSeeOther, "/")
+	// Determine the nature of the addition to provide appropriate feedback
+	var message string
+	if eventType == "vacation" {
+		// Check if the description was updated or a new event was added
+		existingEvent, err := ctlr.service.GetEventByDateAndType(eventDate, "vacation")
+		if err == nil && existingEvent.ID != 0 && existingEvent.Description == description {
+			message = "Vacation event updated successfully."
+		} else {
+			message = "Vacation event added successfully."
+		}
+	} else if eventType == "attendance" {
+		// Since attendance events are not duplicated, confirm addition
+		message = "Attendance event added successfully."
+	} else {
+		message = "Event added successfully."
+	}
+
+	// Redirect back to the calendar with a success message
+	return c.Render(http.StatusOK, "home.html", map[string]interface{}{
+		"Message": message,
+	})
 }
 
 func (ctlr *RTOController) AddDefaultDays(c echo.Context) error {
@@ -350,6 +307,43 @@ func (ctlr *RTOController) BulkAddEventsJSON(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// ClearEventsForDate handles clearing all events for a specific date
+func (ctlr *RTOController) ClearEventsForDate(c echo.Context) error {
+	dateParam := c.Param("date") // Expected format: YYYY-MM-DD
+
+	if dateParam == "" {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Date parameter is required.",
+		})
+	}
+
+	// Parse the date
+	eventDate, err := time.Parse("2006-01-02", dateParam)
+	if err != nil {
+		ctlr.logger.Error("Error parsing date", "fn", "ClearEventsForDate", "date", dateParam, "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"success": false,
+			"message": "Invalid date format. Expected YYYY-MM-DD.",
+		})
+	}
+
+	// Retrieve all events for the date
+	err = ctlr.service.ClearEventsForDate(eventDate)
+	if err != nil {
+		ctlr.logger.Error("Error fetching events for date", "date", eventDate, "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"success": false,
+			"message": "Failed to fetClearch events for the date.",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "All events for the selected date have been cleared.",
+	})
+}
+
 
 === End of internal/adapters/controller/events.go ===
 
@@ -361,6 +355,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -376,6 +371,10 @@ func (ctlr *RTOController) ExportEventsMarkdown(c echo.Context) error {
 
 	// Build the Markdown content
 	var sb strings.Builder
+	// Add Export Date
+	exportDate := time.Now().Format("January 2, 2006 at 3:04 PM")
+	sb.WriteString(fmt.Sprintf("**Exported on:** %s\n\n", exportDate))
+
 	sb.WriteString("# RTO Attendance Tracker - Events Export\n\n")
 	sb.WriteString("## Events List\n\n")
 	sb.WriteString("| Date | Type | Description | In Office |\n")
@@ -415,7 +414,6 @@ func (ctlr *RTOController) ExportEventsMarkdown(c echo.Context) error {
 package controller
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -453,6 +451,10 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	prevMonthDate := currentDate.AddDate(0, -1, 0)
 	nextMonthDate := currentDate.AddDate(0, 1, 0)
 
+	// Define 'today' before the loop
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
 	// Assign events to the corresponding days
 	for weekIdx, week := range weeks {
 		for dayIdx, day := range week {
@@ -467,24 +469,19 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 
 			weeks[weekIdx][dayIdx].Events = dayEvents
 
-		}
-	}
-
-	// Define 'today' before the loop
-	today := time.Now()
-	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-
-	// Assign Today Flag
-	for weekIdx, week := range weeks {
-		for dayIdx, day := range week {
 			if day.Date.Equal(today) {
 				weeks[weekIdx][dayIdx].Today = true
+			} else if day.Date.After(today) && !weeks[weekIdx][dayIdx].IsWeekend {
+				// Set IsFuture flag..but only for M-F
+				weeks[weekIdx][dayIdx].IsFuture = true
 			}
+
 		}
 	}
+
 	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.Local)
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.Local)
+	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
 	// Calculate In-Office Average
 	inOfficeCount, totalDays := utils.CalculateInOfficeAverage(allEvents, startDate, endDate)
 
@@ -522,16 +519,18 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	}
 
 	//log
-	for weekIdx, week := range weeks {
-		for dayIdx, day := range week {
-			// Existing event assignment logic
+	/*
+		for weekIdx, week := range weeks {
+			for dayIdx, day := range week {
+				// Existing event assignment logic
 
-			// Debugging: Log events for each day
-			if len(weeks[weekIdx][dayIdx].Events) > 0 {
-				log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+				// Debugging: Log events for each day
+				if len(weeks[weekIdx][dayIdx].Events) > 0 {
+					log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
+				}
 			}
 		}
-	}
+	*/
 
 	ctlr.logger.Info("***********", "Average", average, "TotalDays", totalDays)
 
@@ -760,6 +759,7 @@ func (r *EventRepositorySQLite) UpdateEvent(event types.Event) error {
 }
 
 func (r *EventRepositorySQLite) DeleteEvent(eventID int) error {
+
 	result := r.db.Delete(&types.Event{}, eventID)
 	return result.Error
 }
