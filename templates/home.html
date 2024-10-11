@@ -49,7 +49,7 @@
                 </div>
             </div>
         </div>
-        <h3 id="average-days">bbb In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
+        <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
             Week</h3>
         <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}}
         </p>
@@ -176,8 +176,8 @@ function fetchChartData() {
         url: '/chart-data',
         method: 'GET',
         dataType: 'json',
-        success: function (data) {
-            renderD3Chart(data);
+        success: function (resp) {
+            renderD3Chart(resp.data, resp.targetDays);
         },
         error: function () {
             toastr.error('Failed to load chart data.');
@@ -187,7 +187,7 @@ function fetchChartData() {
 
 
             // Function to render the D3 chart
-            function renderD3Chart(data) {
+            function renderD3Chart(data, targetDays) {
                 // Remove any existing SVG
                 d3.select("#d3-chart").selectAll("*").remove();
               // Add vertical line for today
@@ -238,8 +238,8 @@ function fetchChartData() {
                 // Create color zones
                 const zoneData = [
                     { start: 0, end: 2, color: "red", msg: "Oh Dear" },
-                    { start: 2, end: 3, color: "yellow", msg: "Safe" },
-                    { start: 3, end: 4, color: "green", msg: "Stellar" },
+                    { start: 2, end: targetDays, color: "yellow", msg: "Safe" },
+                    { start: targetDays, end: 4, color: "green", msg: "Stellar" },
                 ];
 
                 svg.selectAll(".zone")
