@@ -41,5 +41,7 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// **New Route for Exporting Events as Markdown**
 	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
 
+	e.GET("/chart-data", rtoCtl.GetChartData)
+
 	return e
 }

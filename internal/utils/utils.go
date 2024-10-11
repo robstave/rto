@@ -32,6 +32,15 @@ func SameDay(a, b time.Time) bool {
 	return yearA == yearB && monthA == monthB && dayA == dayB
 }
 
+// GetDateRange generates a slice of dates from start to end, inclusive
+func GetDateRange(start, end time.Time) []time.Time {
+	var dates []time.Time
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		dates = append(dates, d)
+	}
+	return dates
+}
+
 // CalculateInOfficeAverage computes the number of in-office days and total days in the quarter
 func CalculateInOfficeAverage(events []types.Event, startDate time.Time, endDate time.Time) (int, int) {
 	// Define the quarter date range: October 1 to December 31 of the current year

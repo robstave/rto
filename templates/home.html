@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+          <!-- Include D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+   
 
     <!-- Include jQuery for simplicity (optional: use vanilla JS or another library) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -51,6 +54,12 @@
         <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}}
         </p>
 
+    </div>
+
+
+       <!-- **New D3 Chart Container** -->
+       <div class="attendance-chart" id="d3-chart">
+        <!-- D3.js will render the chart here -->
     </div>
 
 
@@ -159,6 +168,291 @@
 
     <!-- JavaScript for Toggling Attendance and Updating Progress Bar -->
     <script>
+
+
+// Function to fetch chart data and render the chart
+function fetchChartData() {
+    $.ajax({
+        url: '/chart-data',
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            renderD3Chart(data);
+        },
+        error: function () {
+            toastr.error('Failed to load chart data.');
+        }
+    });
+}
+
+
+            // Function to render the D3 chart
+            function renderD3Chart(data) {
+                // Remove any existing SVG
+                d3.select("#d3-chart").selectAll("*").remove();
+              // Add vertical line for today
+              const today = new Date();
+                // Set up dimensions
+                const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+                const width = 800 - margin.left - margin.right;
+                const height = 400 - margin.top - margin.bottom;
+
+                const svg = d3.select("#d3-chart")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+                // Parse the date
+                const parseDate = d3.timeParse("%Y-%m-%d");
+                data.forEach(d => {
+                    d.date = parseDate(d.date);
+                    d.total = +d.total;
+                });
+
+                // Set up scales
+                const xScale = d3.scaleTime()
+                    .domain(d3.extent(data, d => d.date))
+                    .range([0, width]);
+
+                const yScale = d3.scaleLinear()
+                    //.domain([0, d3.max(data, d => d.total) * 1.1])
+                    .domain([0, 4])
+                    .range([height, 0]);
+
+                // Create axes
+                const xAxis = d3.axisBottom(xScale).ticks(d3.timeWeek.every(1)).tickFormat(d3.timeFormat("%b %d"));
+                const yAxis = d3.axisLeft(yScale);
+
+                svg.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(xAxis)
+                    .selectAll("text")
+                    .attr("transform", "rotate(-45)")
+                    .style("text-anchor", "end");
+
+                svg.append("g")
+                    .call(yAxis);
+
+                // Create color zones
+                const zoneData = [
+                    { start: 0, end: 2, color: "red", msg: "Oh Dear" },
+                    { start: 2, end: 3, color: "yellow", msg: "Safe" },
+                    { start: 3, end: 4, color: "green", msg: "Stellar" },
+                ];
+
+                svg.selectAll(".zone")
+                    .data(zoneData)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "zone")
+                    .attr("x", 0)
+                    .attr("y", d => yScale(d.end))
+                    .attr("width", width)
+                    .attr("height", d => yScale(d.start) - yScale(d.end))
+                    .attr("fill", d => d.color)
+                    .attr("opacity", 0.2)
+                    .lower();
+
+                // Add weekend shading
+                const startDate = new Date(2024, 9, 1); // October 1, 2024
+                const endDate = new Date(2024, 11, 31); // December 31, 2024
+                const dateRange = d3.timeDay.range(startDate, d3.timeDay.offset(endDate, 1));
+
+                svg.selectAll(".weekend")
+                    .data(dateRange.filter(d => d.getDay() === 0 || d.getDay() === 6))
+                    .enter()
+                    .append("rect")
+                    .attr("class", "weekend")
+                    .attr("x", d => xScale(d))
+                    .attr("y", 0)
+                    .attr("width", width / dateRange.length)
+                    .attr("height", height)
+                    .attr("fill", "lightgrey")
+                    .attr("opacity", 0.3)
+                    .lower();
+
+                // Create line
+                const line = d3.line()
+                    .x(d => xScale(d.date))
+                    .y(d => yScale(d.total));
+
+                svg.append("path")
+                    .datum(data)
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 2)
+                    .attr("d", line);
+
+                // Add hover line and tooltip
+                const hoverLine = svg.append("line")
+                    .attr("class", "hover-line")
+                    .attr("y1", 0)
+                    .attr("y2", height)
+                    .style("stroke", "black")
+                    .style("stroke-width", "1px")
+                    .style("stroke-dasharray", "5,5")
+                    .style("opacity", 0);
+
+                const hoverTooltip = d3.select("body").append("div")
+                    .attr("class", "hover-tooltip")
+                    .style("opacity", 0)
+                    .style("position", "absolute")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "1px")
+                    .style("border-radius", "5px")
+                    .style("padding", "10px");
+
+                const bisectDate = d3.bisector(d => d.date).left;
+
+                svg.append("rect")
+                    .attr("class", "overlay")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .style("fill", "none")
+                    .style("pointer-events", "all")
+                    .on("mouseover", () => {
+                        hoverLine.style("opacity", 1);
+                        hoverTooltip.style("opacity", 1);
+                    })
+                    .on("mouseout", () => {
+                        hoverLine.style("opacity", 0);
+                        hoverTooltip.style("opacity", 0);
+                    })
+                    .on("mousemove", mousemove);
+
+                function mousemove(event) {
+                    const [mouseX] = d3.pointer(event);
+                    const x0 = xScale.invert(mouseX);
+                    const i = bisectDate(data, x0, 1);
+                    const d0 = data[i - 1];
+                    const d1 = data[i];
+                    const d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+                    hoverLine
+                        .attr("x1", xScale(d.date))
+                        .attr("x2", xScale(d.date));
+
+                    hoverTooltip
+                        .html(`Date: ${d.date.toLocaleDateString()}<br/>Total: ${d.total.toFixed(2)}`)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                }
+
+                // Add nodes for days you come in
+                const tooltip = d3.select("body").append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0)
+                    .style("position", "absolute")
+                    .style("background-color", "white")
+                    .style("border", "solid")
+                    .style("border-width", "1px")
+                    .style("border-radius", "5px")
+                    .style("padding", "10px");
+
+                svg.selectAll(".node")
+                    .data(data.filter(d => d.comesIn))
+                    .enter()
+                    .append("circle")
+                    .attr("class", "node")
+                    .attr("cx", d => xScale(d.date))
+                    .attr("cy", d => yScale(d.total))
+                    .attr("r", 4)
+                    .attr("fill", d => d.date > today ? "steelblue" : "darkblue")
+                    .on("mouseover", (event, d) => {
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                        tooltip.html(`Date: ${d.date.toLocaleDateString()}<br/>Total: ${d.total.toFixed(2)}`)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 28) + "px");
+                    })
+                    .on("mouseout", () => {
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+
+                // Add title
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", -margin.top / 2)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "16px")
+                    .text("Office Days Burnup Chart");
+
+                // Add legend
+                const legend = svg.append("g")
+                    .attr("class", "legend")
+                    .attr("transform", `translate(${width - 70}, ${height - 120})`);
+
+                // Color zones legend
+                zoneData.forEach((zone, i) => {
+                    legend.append("rect")
+                        .attr("x", 0)
+                        .attr("y", i * 20)
+                        .attr("width", 15)
+                        .attr("height", 15)
+                        .attr("fill", zone.color)
+                        .attr("opacity", 0.2);
+
+                    legend.append("text")
+                        .attr("x", 20)
+                        .attr("y", i * 20 + 12)
+                        .text(`${zone.msg}`)
+                        .style("font-size", "12px");
+                });
+
+                // Node color legend
+                const nodeColors = [
+                    { color: "darkblue", label: "Past" },
+                    { color: "steelblue", label: "Future" }
+                ];
+
+                nodeColors.forEach((node, i) => {
+                    legend.append("circle")
+                        .attr("cx", 7)
+                        .attr("cy", (i + zoneData.length) * 20 + 7)
+                        .attr("r", 4)
+                        .attr("fill", node.color);
+
+                    legend.append("text")
+                        .attr("x", 20)
+                        .attr("y", (i + zoneData.length) * 20 + 12)
+                        .text(node.label)
+                        .style("font-size", "12px");
+                });
+
+  
+                const todayLine = svg.append("line")
+                    .attr("class", "today-line")
+                    .attr("x1", xScale(today))
+                    .attr("y1", 0)
+                    .attr("x2", xScale(today))
+                    .attr("y2", height)
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5");
+
+                // Add label for today's line
+                svg.append("text")
+                    .attr("class", "today-label")
+                    .attr("x", xScale(today))
+                    .attr("y", 0)
+                    .attr("dy", "-0.5em")
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "red")
+                    .text("Today");
+
+                // Ensure today's line is above the zones but below the data line and points
+                todayLine.raise();
+                svg.selectAll("path").raise();
+                svg.selectAll(".node").raise();
+            }
+
+
         $(document).ready(function () {
 
             // Define total days (e.g., 7 for a week)
@@ -209,6 +503,9 @@
 
         initializeProgressBar(initialAverage, targetDays);
         createTicks(totalDays);
+ // Fetch data from the backend when the document is ready
+ fetchChartData();
+       
 
         // Handle click on attendance toggle
         $('.toggle-attendance').on('click', function () {
@@ -246,6 +543,8 @@
                         $('#average-days').text('In-Office Average Days for Q4 (Oct 1 - Dec 31): ' + averageDays + ' Days per Week');
                         $('#counts').text('In-Office Days: ' + inOfficeCount + ' / Total Days: ' + totalDays + ' / Target Days: ' + targetDays);
                         initializeProgressBar(averagePercent, targetDays);
+
+                        fetchChartData();
 
                         // Optionally, show a success message using Toastr
                         toastr.success('Attendance status updated successfully.');
@@ -302,6 +601,7 @@
                 console.log("cleeeeeek")
                 // Prevent triggering when clicking on toggle-attendance
                 if ($(e.target).hasClass('toggle-attendance') || $(e.target).parents('.toggle-attendance').length > 0) {
+                    fetchChartData(); // Re-fetch and re-render the chart based on the new filter
                     return;
                 }
 
@@ -418,6 +718,9 @@
             
         });
     </script>
+
+ 
+
 </body>
 
 </html>
