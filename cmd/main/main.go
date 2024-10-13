@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	api "github.com/robstave/rto/internal"
+
+	"github.com/labstack/echo/v4"
 	"github.com/robstave/rto/internal/adapters/controller"
 	"github.com/robstave/rto/logger"
-
 	slogecho "github.com/samber/slog-echo"
 )
 
@@ -38,9 +38,13 @@ func main() {
 	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
 	rtoClt := controller.NewRTOController(dbPath, slogger)
 
+	// Initialize session middleware with a cookie store
+
 	e := api.GetEcho(rtoClt)
 	mw := slogecho.New(slogger)
 	e.Use(mw)
+
+	//e.Use(session.Middleware(sessions.NewCookieStore([]byte())))
 
 	funcMap := template.FuncMap{
 		"formatDate": func(t time.Time, layout string) string {

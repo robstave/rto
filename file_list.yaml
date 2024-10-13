@@ -2,9 +2,8 @@
 #observations.md
 #directives.md
  
-
-
 con-adapters:
+  - internal/adapters/controller/chart.go
   - internal/adapters/controller/controller.go
   - internal/adapters/controller/delete.go
   - internal/adapters/controller/events.go
@@ -34,8 +33,10 @@ con-domain:
 con-templates:
   - static/css/styles.css
   - templates/add_event.html
-  - templates/home.html
   - templates/events.html
   - templates/prefs.html
+
+con-home:
+  - templates/home.html
 
 # Add more groups as needed

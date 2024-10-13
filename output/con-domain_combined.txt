@@ -110,6 +110,8 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// **New Route for Exporting Events as Markdown**
 	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
 
+	e.GET("/chart-data", rtoCtl.GetChartData)
+
 	return e
 }
 
@@ -965,6 +967,15 @@ func SameDay(a, b time.Time) bool {
 	yearA, monthA, dayA := a.Date()
 	yearB, monthB, dayB := b.Date()
 	return yearA == yearB && monthA == monthB && dayA == dayB
+}
+
+// GetDateRange generates a slice of dates from start to end, inclusive
+func GetDateRange(start, end time.Time) []time.Time {
+	var dates []time.Time
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		dates = append(dates, d)
+	}
+	return dates
 }
 
 // CalculateInOfficeAverage computes the number of in-office days and total days in the quarter
