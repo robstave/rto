@@ -1,8 +1,14 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/gorilla/sessions"
+
+	"github.com/labstack/echo-contrib/session"
 	"github.com/robstave/rto/internal/adapters/controller"
 )
 
@@ -13,35 +19,58 @@ func GetEcho(rtoCtl *controller.RTOController) *echo.Echo {
 	// Middleware (optional)
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	//e.Pre(middleware.RemoveTrailingSlash())
+	// CORS
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"*"},
+	}))
+
+	store := sessions.NewCookieStore([]byte("    ffffff"))
+	store.Options = &sessions.Options{
+		Path: "/",
+		//Domain:   "192.168.86.176", // Update as per your domain
+		MaxAge:   86400 * 7, // 7 days
+		HttpOnly: true,
+		Secure:   false,                // Set to true in production (requires HTTPS)
+		SameSite: http.SameSiteLaxMode, // Adjust as needed
+	}
+	e.Use(session.Middleware(store))
 
 	// Static files
 	e.Static("/static", "static")
 
-	e.GET("/add-event", rtoCtl.ShowAddEventForm) // New route to show add event form
-	e.POST("/add-event", rtoCtl.AddEvent)        // Existing POST route to handle form submission
+	// Public Routes
+	e.GET("/login", rtoCtl.ShowLoginForm)
+	e.POST("/login", rtoCtl.ProcessLogin)
+	e.GET("/logout", rtoCtl.Logout)
 
-	e.GET("/events", rtoCtl.EventsList)
-	e.GET("/prefs", rtoCtl.ShowPrefs)
-	e.POST("/prefs/update", rtoCtl.UpdatePreferences) // New route for updating preferences
+	// Group protected routes
+	r := e.Group("")
+	r.Use(rtoCtl.AuthMiddleware)
+
+	r.GET("/add-event", rtoCtl.ShowAddEventForm) //  show add event form
+	r.POST("/add-event", rtoCtl.AddEvent)        //  handle form submission
+
+	r.GET("/events", rtoCtl.EventsList)
+	r.GET("/prefs", rtoCtl.ShowPrefs)
+	r.POST("/prefs/update", rtoCtl.UpdatePreferences) // New route for updating preferences
 
 	// Routes
-	e.GET("/", rtoCtl.Home)
+	r.GET("/", rtoCtl.Home)
+	r.GET("", rtoCtl.Home)
 
-	// Register the new route for toggling attendance
-	e.POST("/toggle-attendance", rtoCtl.ToggleAttendance)
+	r.POST("/toggle-attendance", rtoCtl.ToggleAttendance)
 
-	// Register the new route for adding default days
-	e.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
-	e.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
-	e.POST("/add-events-json", rtoCtl.BulkAddEventsJSON)
+	r.POST("/prefs/add-default-days", rtoCtl.AddDefaultDays)
+	r.DELETE("/events/delete/:id", rtoCtl.DeleteEvent)
+	r.POST("/add-events-json", rtoCtl.BulkAddEventsJSON)
 
-	// Register the new route for clearing all events on a date
-	e.DELETE("/events/clear/:date", rtoCtl.ClearEventsForDate)
+	r.DELETE("/events/clear/:date", rtoCtl.ClearEventsForDate)
 
-	// **New Route for Exporting Events as Markdown**
-	e.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
+	r.GET("/export/markdown", rtoCtl.ExportEventsMarkdown)
 
-	e.GET("/chart-data", rtoCtl.GetChartData)
+	r.GET("/chart-data", rtoCtl.GetChartData)
 
 	return e
 }

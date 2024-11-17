@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - RTO Attendance Tracker</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Login to RTO Attendance Tracker</h1>
+
+    <!-- Login Form -->
+    <div class="login-form" style="max-width: 400px; margin: 0 auto;">
+        <form action="/login" method="POST">
+            <div style="margin-bottom: 15px;">
+                <label for="username">Username:</label><br>
+                <input type="text" id="username" name="username" required
+                    placeholder="Enter your username" style="width: 100%; padding: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="password">Password:</label><br>
+                <input type="password" id="password" name="password" required
+                    placeholder="Enter your password" style="width: 100%; padding: 8px;">
+            </div>
+            <button type="submit" style="width: 100%; padding: 10px;">Login</button>
+        </form>
+    </div>
+
+    <!-- Optional: Display Error Message -->
+    {{if .Error}}
+    <div style="max-width: 400px; margin: 20px auto; text-align: center; color: red;">
+        <p>{{.Error}}</p>
+    </div>
+    {{end}}
+
+    <!-- Toastr Notifications -->
+    <script>
+        {{if .Error}}
+            toastr.error("{{.Error}}");
+        {{end}}
+    </script>
+</body>
+
+</html>

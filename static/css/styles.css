@@ -87,15 +87,15 @@ p {
 /* Attendance Average */
 .attendance-average {
     text-align: center;
-    margin-bottom: 50px !important;
+    margin-bottom: 2px !important;
 }
 
 .attendance-average h3 {
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
 .attendance-average p {
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
 /* Progress Bar */
@@ -162,11 +162,33 @@ p {
 .attendance-chart {
     width: 100%;
     max-width: 800px;
-    margin: 40px auto;
-    height: 70px;
+    margin: 2px auto;
+    height: 400px; 
     /* Accommodate title and chart */
     position: relative;
 }
+
+
+ 
+
+.attendance-chart svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Tooltip Styles */
+.hover-tooltip {
+    font-size: 12px;
+    color: var(--color-text);
+    pointer-events: none;
+}
+
+.tooltip {
+    font-size: 12px;
+    color: var(--color-text);
+    pointer-events: none;
+}
+
 
 .attendance-chart h3 {
     text-align: center;
@@ -175,7 +197,7 @@ p {
 }
 
 .attendance-chart canvas {
-    height: 50px !important;
+    
     width: 100% !important;
 }
 
@@ -765,33 +787,3 @@ input:checked+.slider:before {
 
 
 
-
-/* Existing styles */
-
-/* D3 Chart Styles */
-.attendance-chart {
-    width: 100%;
-    max-width: 800px;
-    margin: 40px auto;
-    height: 400px;
-    /* Adjust height as needed */
-    position: relative;
-}
-
-.attendance-chart svg {
-    width: 100%;
-    height: 100%;
-}
-
-/* Tooltip Styles */
-.hover-tooltip {
-    font-size: 12px;
-    color: var(--color-text);
-    pointer-events: none;
-}
-
-.tooltip {
-    font-size: 12px;
-    color: var(--color-text);
-    pointer-events: none;
-}

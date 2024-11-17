@@ -1,6 +1,86 @@
 package controller
 
 import (
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+)
+
+// ChartResponse represents the JSON response for the chart data
+type ChartResponse struct {
+	Data       []map[string]interface{} `json:"data"`
+	TargetDays float64                  `json:"targetDays"`
+}
+
+// GetChartData handles the retrieval of data for the D3 chart
+func (ctlr *RTOController) GetChartData(c echo.Context) error {
+	// Fetch all events from the service
+	events := ctlr.service.GetAllEvents()
+	prefs := ctlr.service.GetPrefs()
+	targetDaysStr := prefs.TargetDays
+	targetDays, err := strconv.ParseFloat(targetDaysStr, 64)
+	if err != nil {
+		// Fallback to default target if parsing fails
+		targetDays = 2.5
+	}
+
+	// Build the date range (October 1, 2024 to December 31, 2024)
+	startDate := time.Date(2024, 10, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
+	dateRange := utils.GetDateRange(startDate, endDate) // We'll define this utility function next
+
+	// Prepare data for the chart
+	var data []map[string]interface{}
+
+	total := 0.0
+	for _, date := range dateRange {
+		dayOfWeek := date.Weekday()
+		isWeekday := dayOfWeek >= time.Monday && dayOfWeek <= time.Friday
+		comesIn := isWeekday && (countAttendanceOnDate(events, date) > 0) // Define countAttendanceOnDate
+		if comesIn {
+			total += 7.0 / float64(len(dateRange))
+
+		}
+
+		data = append(data, map[string]interface{}{
+			"date":    date.Format("2006-01-02"),
+			"comesIn": comesIn,
+			"total":   total,
+		})
+	}
+
+	// Create the ChartResponse
+	response := ChartResponse{
+		Data:       data,
+		TargetDays: targetDays,
+	}
+
+	// Return the ChartResponse as JSON
+	return c.JSON(http.StatusOK, response)
+
+}
+
+// Utility function to count attendance on a specific date
+func countAttendanceOnDate(events []types.Event, date time.Time) int {
+	count := 0
+	for _, event := range events {
+		if utils.SameDay(event.Date, date) && event.Type == "attendance" && event.IsInOffice {
+			count++
+		}
+	}
+	return count
+}
+
+
+=== End of internal/adapters/controller/chart.go ===
+
+package controller
+
+import (
 	"log/slog"
 
 	repo "github.com/robstave/rto/internal/adapters/repositories"
@@ -410,6 +490,90 @@ func (ctlr *RTOController) ExportEventsMarkdown(c echo.Context) error {
 
 
 === End of internal/adapters/controller/export.go ===
+
+package controller
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"log/slog"
+	"path/filepath"
+
+	"os"
+
+	"github.com/robstave/rto/internal/domain/types"
+	"github.com/robstave/rto/internal/utils"
+	"gorm.io/gorm"
+)
+
+func initializeHolidays(db *gorm.DB, logger *slog.Logger) error {
+	// Load holidays from JSON file
+	holidaysPath := filepath.Join("static", "holidays.json")
+	file, err := os.Open(holidaysPath)
+	if err != nil {
+		logger.Error("Failed to open holidays.json", "error", err)
+		return err
+	}
+	defer file.Close()
+
+	byteValue, err := ioutil.ReadAll(file)
+	if err != nil {
+		logger.Error("Failed to read holidays.json", "error", err)
+		return err
+	}
+
+	// Define a temporary struct for unmarshaling
+	type RawHoliday struct {
+		Date        string `json:"date"`
+		Description string `json:"description"`
+		Type        string `json:"type"`       // e.g., "holiday", "vacation"
+		IsInOffice  bool   `json:"isInOffice"` // Optional
+	}
+
+	var rawHolidays []RawHoliday
+	if err := json.Unmarshal(byteValue, &rawHolidays); err != nil {
+		logger.Error("Failed to parse holidays.json", "error", err)
+		return err
+	}
+
+	// Insert holidays into the database if they don't already exist
+	for _, rawHoliday := range rawHolidays {
+		// Parse date
+		date, err := utils.ParseDate(rawHoliday.Date)
+		if err != nil {
+			logger.Error("Invalid date in holidays.json", "date", rawHoliday.Date, "error", err)
+			continue
+		}
+
+		// Create an Event
+		holiday := types.Event{
+			Date:        date,
+			Description: rawHoliday.Description,
+			Type:        rawHoliday.Type,
+			IsInOffice:  false, // Holidays override attendance
+		}
+
+		// Check if the holiday already exists
+		var count int64
+		db.Model(&types.Event{}).
+			Where("date = ? AND type = ?", date, holiday.Type).
+			Count(&count)
+
+		if count == 0 {
+			// Insert holiday
+			if err := db.Create(&holiday).Error; err != nil {
+				logger.Error("Failed to insert holiday", "date", date, "error", err)
+			} else {
+				logger.Info("Inserted holiday", "date", date, "name", holiday.Description)
+			}
+		}
+	}
+
+	return nil
+}
+
+
+=== End of internal/adapters/controller/holidays.go ===
 
 package controller
 

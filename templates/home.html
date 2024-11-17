@@ -37,18 +37,8 @@
     </div>
 
     <!-- Display In-Office Average -->
-    <div class="attendance-average" style="text-align: center; margin-bottom: 120px;">
-
-
-        <div class="progress-bar-container">
-            <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill"></div>
-                <!-- Tick Marks Container -->
-                <div class="ticks" id="ticks-container">
-                    <!-- Tick marks will be dynamically generated here -->
-                </div>
-            </div>
-        </div>
+    <div class="attendance-average" style="text-align: center; margin-bottom: 80px;">
+ 
         <h3 id="average-days">In-Office Average Days for Q4 (Oct 1 - Dec 31): {{printf "%.2f" .AverageDays}} Days per
             Week</h3>
         <p id="counts">In-Office Days: {{.InOfficeCount}} / Total Days: {{.TotalDays}} / Target Days: {{.TargetDays}}
@@ -138,6 +128,26 @@
             Markdown</button>
     </div>
 
+    
+    <!-- Display In-Office Average -->
+    <div class="attendance-average" style="text-align: center; margin-bottom: 120px;">
+
+
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+                <!-- Tick Marks Container -->
+                <div class="ticks" id="ticks-container">
+                    <!-- Tick marks will be dynamically generated here -->
+                </div>
+            </div>
+        </div>
+     
+        </p>
+
+    </div>
+
+
 
  <!-- Modal Structure -->
 <div id="eventModal" class="modal">
@@ -193,7 +203,7 @@ function fetchChartData() {
               // Add vertical line for today
               const today = new Date();
                 // Set up dimensions
-                const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+                const margin = { top: 30, right: 30, bottom: 40, left: 40 };
                 const width = 800 - margin.left - margin.right;
                 const height = 400 - margin.top - margin.bottom;
 
@@ -378,7 +388,7 @@ function fetchChartData() {
                 // Add title
                 svg.append("text")
                     .attr("x", width / 2)
-                    .attr("y", -margin.top / 2)
+                    .attr("y", -margin.top / 2 + 8)
                     .attr("text-anchor", "middle")
                     .style("font-size", "16px")
                     .text("Office Days Burnup Chart");
@@ -432,19 +442,11 @@ function fetchChartData() {
                     .attr("y1", 0)
                     .attr("x2", xScale(today))
                     .attr("y2", height)
-                    .attr("stroke", "red")
+                    .attr("stroke", "blue")
                     .attr("stroke-width", 2)
-                    .attr("stroke-dasharray", "5,5");
+                    .attr("stroke-dasharray", "1,5");
 
-                // Add label for today's line
-                svg.append("text")
-                    .attr("class", "today-label")
-                    .attr("x", xScale(today))
-                    .attr("y", 0)
-                    .attr("dy", "-0.5em")
-                    .attr("text-anchor", "middle")
-                    .attr("fill", "red")
-                    .text("Today");
+           
 
                 // Ensure today's line is above the zones but below the data line and points
                 todayLine.raise();
