@@ -442,19 +442,11 @@ function fetchChartData() {
                     .attr("y1", 0)
                     .attr("x2", xScale(today))
                     .attr("y2", height)
-                    .attr("stroke", "red")
+                    .attr("stroke", "blue")
                     .attr("stroke-width", 2)
-                    .attr("stroke-dasharray", "5,5");
+                    .attr("stroke-dasharray", "1,5");
 
-                // Add label for today's line
-                svg.append("text")
-                    .attr("class", "today-label")
-                    .attr("x", xScale(today))
-                    .attr("y", 0)
-                    .attr("dy", "-0.5em")
-                    .attr("text-anchor", "middle")
-                    .attr("fill", "red")
-                    .text("Today");
+           
 
                 // Ensure today's line is above the zones but below the data line and points
                 todayLine.raise();

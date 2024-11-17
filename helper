@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Helper Script for Managing the Go Application
+
+# Function to run the main application
+run_main() {
+    echo "Running the main application..."
+    go run cmd/main/main.go
+}
+
+# Function to run the concat command
+run_concat() {
+    echo "Running the concat command..."
+    go run cmd/concat/concat.go
+}
+
+# Function to start Docker containers
+docker_up() {
+    echo "Starting Docker containers..."
+    docker compose up -d
+}
+
+# Function to stop Docker containers
+docker_down() {
+    echo "Stopping Docker containers..."
+    docker compose down
+}
+
+# Function to generate Mock Go code
+generate_mocks() {
+    echo "Generating Go code..."
+    go generate ./...
+}
+
+# Function to display usage information
+usage() {
+    echo "Usage: $0 {run|config|up|down|generate|help}"
+    echo ""
+    echo "Commands:"
+    echo "  run        Run the main application"
+    echo "  concat     Run the concat command"
+    echo "  up         Start Docker containers"
+    echo "  down       Stop Docker containers"
+    echo "  test       Run Tests"
+    echo "  mocks      Build Mocks"
+    echo "  help       Display this help message"
+}
+
+# Check if at least one argument is provided
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+# Parse the command
+case "$1" in
+    run)
+        run_main
+        ;;
+    concat)
+        run_concat
+        ;;
+    up)
+        docker_up
+        ;;
+    down)
+        docker_down
+        ;;
+    generate)
+        generate_mocks
+        ;;
+    help|--help|-h)
+        usage
+        ;;
+    *)
+        echo "Error: Unknown command '$1'"
+        usage
+        exit 1
+        ;;
+esac

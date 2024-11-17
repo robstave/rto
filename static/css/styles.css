@@ -163,7 +163,7 @@ p {
     width: 100%;
     max-width: 800px;
     margin: 2px auto;
-    height: 40px;
+    height: 400px; 
     /* Accommodate title and chart */
     position: relative;
 }

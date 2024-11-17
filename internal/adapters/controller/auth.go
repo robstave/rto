@@ -71,7 +71,7 @@ func (ctlr *RTOController) Logout(c echo.Context) error {
 // AuthMiddleware is middleware to check if user is authenticated
 func (ctlr *RTOController) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctlr.logger.Info("Miiiiiiiiiiidddddddleware", "result")
+		//ctlr.logger.Info("Miiiiiiiiiiidddddddleware", "result")
 
 		sess, err := session.Get("session", c)
 		if err != nil {
@@ -81,12 +81,12 @@ func (ctlr *RTOController) AuthMiddleware(next echo.HandlerFunc) echo.HandlerFun
 
 		auth, ok := sess.Values["authenticated"].(bool)
 		if !ok || !auth {
-			ctlr.logger.Info("nooooo00000oooooooooooopare", "result", !ok || !auth)
+			ctlr.logger.Info("auth middleware failed", "result", !ok || !auth)
 
 			return c.Redirect(http.StatusSeeOther, "/login")
 		}
 
-		ctlr.logger.Info("ROOOOOOOUUUUUTTTTE  good", "result")
+		ctlr.logger.Info("++ auth good ++")
 
 		return next(c)
 	}
