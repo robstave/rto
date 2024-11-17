@@ -32,6 +32,7 @@ func (ctlr *RTOController) AddEvent(c echo.Context) error {
 	isInOfficeStr := c.FormValue("isInOffice") // "true" or "false"
 
 	if dateStr == "" || eventType == "" {
+
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"success": false,
 			"message": "Date and Event Type are required",

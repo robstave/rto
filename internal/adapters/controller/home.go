@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -31,6 +32,8 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 		}
 	}
 
+	log.Println("1")
+
 	// Generate calendar for the current month
 	weeks := utils.GetCalendarMonth(currentDate)
 
@@ -41,7 +44,7 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	// Define 'today' before the loop
 	today := time.Now()
 	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-
+	log.Println("21")
 	// Assign events to the corresponding days
 	for weekIdx, week := range weeks {
 		for dayIdx, day := range week {
@@ -65,7 +68,7 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 
 		}
 	}
-
+	log.Println("31")
 	currentYear := time.Now().Year()
 	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
 	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
@@ -80,7 +83,7 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 	}
 
 	// Fetch target days from preferences
-
+	log.Println("41")
 	currentPreferences := ctlr.service.GetPrefs()
 	targetDaysFloat, _ := strconv.ParseFloat(currentPreferences.TargetDays, 64)
 
@@ -105,22 +108,7 @@ func (ctlr *RTOController) Home(c echo.Context) error {
 		"Preferences":   currentPreferences, // Add Preferences here
 	}
 
-	//log
-	/*
-		for weekIdx, week := range weeks {
-			for dayIdx, day := range week {
-				// Existing event assignment logic
-
-				// Debugging: Log events for each day
-				if len(weeks[weekIdx][dayIdx].Events) > 0 {
-					log.Printf("Date: %s, Events: %+v\n", day.Date.Format("2006-01-02"), weeks[weekIdx][dayIdx].Events)
-				}
-			}
-		}
-	*/
-
-	ctlr.logger.Info("***********", "Average", average, "TotalDays", totalDays)
-
+	log.Println("r1")
 	// Render the template
 	if err := c.Render(http.StatusOK, "home.html", data); err != nil {
 		ctlr.logger.Error("Template rendering error:", "error", err)

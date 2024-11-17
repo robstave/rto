@@ -32,6 +32,13 @@ generate_mocks() {
     go generate ./...
 }
 
+
+run_tests    
+    echo "Running tests..."
+    go test ./...
+}
+
+
 # Function to display usage information
 usage() {
     echo "Usage: $0 {run|config|up|down|generate|help}"
