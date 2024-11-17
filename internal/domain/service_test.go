@@ -2,9 +2,9 @@ package domain
 
 import (
 	"errors"
-	"testing"
-
 	"log/slog"
+	"os"
+	"testing"
 
 	"github.com/robstave/rto/internal/adapters/repositories/mocks"
 	"github.com/robstave/rto/internal/domain/types"
@@ -34,7 +34,7 @@ func TestUpdatePreferences_Success(t *testing.T) {
 	mockRepo.On("UpdatePreferences", updatedPrefs).Return(nil)
 
 	// Initialize the service with the mock repository
-	logger := slog.New(slog.NewTextHandler(nil, nil)) // Using a simple logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)) // Using a simple logger
 	service := Service{
 		logger:         logger,
 		eventRepo:      nil, // Not needed for this test
@@ -61,7 +61,7 @@ func TestUpdatePreferences_GetPreferencesError(t *testing.T) {
 	mockRepo.On("GetPreferences").Return(types.Preferences{}, errors.New("database error"))
 
 	// Initialize the service with the mock repository
-	logger := slog.New(slog.NewTextHandler(nil, nil)) // Using a simple logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)) // Using a simple logger
 	service := Service{
 		logger:         logger,
 		eventRepo:      nil, // Not needed for this test
@@ -102,7 +102,7 @@ func TestUpdatePreferences_UpdatePreferencesError(t *testing.T) {
 	mockRepo.On("UpdatePreferences", updatedPrefs).Return(errors.New("update failed"))
 
 	// Initialize the service with the mock repository
-	logger := slog.New(slog.NewTextHandler(nil, nil)) // Using a simple logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil)) // Using a simple logger
 	service := Service{
 		logger:         logger,
 		eventRepo:      nil, // Not needed for this test
