@@ -1,8 +1,8 @@
-#readme.md
-#observations.md
-#directives.md
+# concats all the files into a few large ones
+#  use ./helper concat
  
 con-adapters:
+  - docs/instructions.md
   - internal/adapters/controller/chart.go
   - internal/adapters/controller/controller.go
   - internal/adapters/controller/delete.go
@@ -19,6 +19,7 @@ con-adapters:
   - internal/adapters/repositories/preference_repository.go
 
 con-domain:
+  - docs/instructions.md
   - cmd/main/main.go
   - internal/echo-routes.go
   - internal/domain/types/types.go
@@ -31,12 +32,27 @@ con-domain:
   - internal/utils/utils.go
 
 con-templates:
+  - docs/instructions.md
   - static/css/styles.css
   - templates/add_event.html
   - templates/events.html
   - templates/prefs.html
 
+con-tests:
+  - docs/instructions.md
+  - internal/domain/mocks/RTOBLL.go
+  - internal/domain/toggle_test.go
+  - internal/domain/service_test.go
+  - internal/adapters/repositories/mocks/EventRepository.go
+  - internal/adapters/repositories/mocks/PreferenceRepository.go
+  - internal/adapters/repositories/event_repository_test.go
+  - internal/adapters/repositories/preference_repository_test.go
+  - internal/adapters/controller/controller_test.go
+  - internal/adapters/controller/delete_test.go
+  - internal/adapters/controller/toggle_test.go
+
 con-home:
+  - docs/instructions.md
   - templates/home.html
 
 # Add more groups as needed

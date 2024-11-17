@@ -71,6 +71,11 @@ docker compose down -d
 
 Generate the mocks with mockery.  See Helper File
 
+## Working with Chatgpt
+
+I run ` .helper concat` to get all the concatinated files into the /output dir
+There is a file, file_list.yaml that sets all of this up
+
 ## Further Features
 
 I could see if I can dial this up a notch and add
