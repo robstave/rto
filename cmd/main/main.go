@@ -16,6 +16,12 @@ import (
 	slogecho "github.com/samber/slog-echo"
 )
 
+// Quarter configuration – centralizing start/end dates for the quarter
+var (
+	QuarterStart = time.Date(2024, time.December, 30, 0, 0, 0, 0, time.UTC)
+	QuarterEnd   = time.Date(2025, time.March, 31, 0, 0, 0, 0, time.UTC)
+)
+
 // TemplateRenderer is a custom renderer for Echo
 type TemplateRenderer struct {
 	templates *template.Template
@@ -36,7 +42,7 @@ func main() {
 
 	slogger := logger.InitializeLogger()
 	logger.SetLogger(slogger) // Optional: If you prefer setting a package-level logger
-	rtoClt := controller.NewRTOController(dbPath, slogger)
+	rtoClt := controller.NewRTOController(dbPath, slogger, QuarterStart, QuarterEnd)
 
 	// Initialize session middleware with a cookie store
 

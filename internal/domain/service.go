@@ -34,18 +34,24 @@ type Service struct {
 	logger         *slog.Logger
 	eventRepo      repository.EventRepository
 	preferenceRepo repository.PreferenceRepository
+	quarterStart   time.Time
+	quarterEnd     time.Time
 }
 
 func NewService(
 	logger *slog.Logger,
 	eventRepo repository.EventRepository,
 	preferenceRepo repository.PreferenceRepository,
+	quarterStart time.Time,
+	quarterEnd time.Time,
 ) RTOBLL {
 
 	service := Service{
 		logger:         logger,
 		eventRepo:      eventRepo,
 		preferenceRepo: preferenceRepo,
+		quarterStart:   quarterStart,
+		quarterEnd:     quarterStart,
 	}
 
 	service.preferences = initializePreferences(&service)

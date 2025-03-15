@@ -18,6 +18,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	QuarterStart = time.Date(2024, time.October, 30, 0, 0, 0, 0, time.UTC)
+	QuarterEnd   = time.Date(2024, time.December, 31, 0, 0, 0, 0, time.UTC)
+)
+
 func TestGetChartData_Success(t *testing.T) {
 	// Initialize Echo
 	e := echo.New()
@@ -53,7 +58,7 @@ func TestGetChartData_Success(t *testing.T) {
 	mockService.On("GetPrefs").Return(prefs)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a GET request
@@ -98,7 +103,7 @@ func TestGetChartData_TargetDaysParsingError(t *testing.T) {
 	mockService.On("GetPrefs").Return(prefs)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a GET request
@@ -143,7 +148,7 @@ func TestGetChartData_EmptyEvents(t *testing.T) {
 	mockService.On("GetPrefs").Return(prefs)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a GET request

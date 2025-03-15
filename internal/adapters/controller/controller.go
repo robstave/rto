@@ -2,6 +2,7 @@ package controller
 
 import (
 	"log/slog"
+	"time"
 
 	repo "github.com/robstave/rto/internal/adapters/repositories"
 	"github.com/robstave/rto/internal/domain"
@@ -13,12 +14,16 @@ import (
 type RTOController struct {
 	service domain.RTOBLL
 
-	logger *slog.Logger
+	logger       *slog.Logger
+	quarterStart time.Time
+	quarterEnd   time.Time
 }
 
 func NewRTOController(
 	dbPath string,
 	logger *slog.Logger,
+	quarterStart time.Time,
+	quarterEnd time.Time,
 
 ) *RTOController {
 
@@ -61,11 +66,13 @@ func NewRTOController(
 		logger,
 		eventRepo,
 		preferenceRepo,
+		quarterStart,
+		quarterEnd,
 	)
 
-	return &RTOController{service, logger}
+	return &RTOController{service, logger, quarterStart, quarterEnd}
 }
 
-func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL) *RTOController {
-	return &RTOController{service, nil} // Pass a mock logger or nil if not used in tests
+func NewRTOControllerWithMock(dbPath string, service domain.RTOBLL, quarterStart time.Time, quarterEnd time.Time) *RTOController {
+	return &RTOController{service, nil, quarterStart, quarterEnd} // Pass a mock logger or nil if not used in tests
 }

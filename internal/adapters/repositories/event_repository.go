@@ -20,10 +20,11 @@ type EventRepository interface {
 	GetEventByDate(date time.Time) (types.Event, error)
 	GetEventByID(eventID int) (types.Event, error)
 	GetEventsByType(eventType string) ([]types.Event, error)
-
-	// New method to fetch event by date and type
 	GetEventByDateAndType(date time.Time, eventType string) (types.Event, error)
 	GetEventsByDate(date time.Time) ([]types.Event, error)
+	GetEventsByTypeBetween(eventType string, start, end time.Time) ([]types.Event, error)
+	GetEventsBetweenDates(start, end time.Time) ([]types.Event, error)
+	GetEventByDateAndTypeBetween(eventType string, start, end time.Time) (types.Event, error)
 }
 
 func NewEventRepositorySQLite(db *gorm.DB) EventRepository {

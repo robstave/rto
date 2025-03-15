@@ -26,7 +26,7 @@ func TestDeleteEvent_Success(t *testing.T) {
 	mockService.On("TransformVacationToRemote", 1).Return(nil)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 
 	// Create a DELETE request with a valid event ID
 	req := httptest.NewRequest(http.MethodDelete, "/events/delete/1", nil)
@@ -55,7 +55,7 @@ func TestDeleteEvent_InvalidID(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 	// Create a DELETE request with an invalid event ID
 	req := httptest.NewRequest(http.MethodDelete, "/events/delete/abc", nil)
@@ -86,7 +86,7 @@ func TestDeleteEvent_ServiceError(t *testing.T) {
 	mockService.On("TransformVacationToRemote", 2).Return(errors.New("event not found"))
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a DELETE request with a valid event ID but service returns error

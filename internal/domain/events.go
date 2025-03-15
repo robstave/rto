@@ -108,7 +108,7 @@ func (s *Service) ClearEventsForDate(date time.Time) error {
 }
 
 func (s *Service) AddDefaultDays() error {
-	s.logger.Info("AddDefaultDays triggered")
+	s.logger.Info("===================AddDefaultDays triggered")
 
 	// Get current preferences
 	prefs, err := s.preferenceRepo.GetPreferences()
@@ -126,10 +126,11 @@ func (s *Service) AddDefaultDays() error {
 	}
 
 	// Define the date range
-	currentYear := time.Now().Year()
-	startDate := time.Date(currentYear, time.October, 1, 0, 0, 0, 0, time.UTC)
-
-	endDate := time.Date(currentYear, time.December, 31, 0, 0, 0, 0, time.UTC)
+	//currentYear := time.Now().Year()
+	startDate := time.Date(2024, time.December, 30, 0, 0, 0, 0, time.UTC)
+	//startDate := s.quarterStart
+	//endDate := s.quarterEnd
+	endDate := time.Date(2025, time.March, 31, 0, 0, 0, 0, time.UTC)
 
 	// Retrieve existing events
 	existingEvents, err := s.eventRepo.GetAllEvents()

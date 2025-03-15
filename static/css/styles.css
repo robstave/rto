@@ -404,6 +404,17 @@ p {
     font-size: 1em;
 }
 
+ 
+  
+  .message.success {
+    color: green;
+  }
+  
+  .message.error {
+    color: red;
+  }
+
+
 /* Responsive Design */
 @media (max-width: 768px) {
 
@@ -785,5 +796,56 @@ input:checked+.slider:before {
 
 
 
+ 
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+ 
+
+ 
+
+p.info {
+  max-width: 600px;
+  margin: 20px auto;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.preferences-form {
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.preferences-form div {
+  margin-bottom: 15px;
+}
+
+.preferences-form label {
+  font-weight: bold;
+}
+
+.preferences-form input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.preferences-form button {
+  padding: 10px 20px;
+  font-size: 1em;
+  display: block;
+  margin: 0 auto;
+}
+
+.button-group {
+  text-align: center;
+  margin-top: 20px;
+}
 
 
+ 

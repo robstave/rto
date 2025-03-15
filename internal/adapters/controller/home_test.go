@@ -57,7 +57,7 @@ func TestHome_Success(t *testing.T) {
 	//mockService.On("CalculateAttendanceStats").Return(attendanceStats, nil)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a GET request
@@ -114,7 +114,7 @@ func TestHome_NoEvents(t *testing.T) {
 	mockService.On("GetPrefs").Return(prefs)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a GET request

@@ -108,6 +108,27 @@ func (_m *EventRepository) GetEventByDateAndType(date time.Time, eventType strin
 	return r0, r1
 }
 
+// GetEventByDateAndTypeBetween provides a mock function with given fields: eventType, start, end
+func (_m *EventRepository) GetEventByDateAndTypeBetween(eventType string, start time.Time, end time.Time) (types.Event, error) {
+	ret := _m.Called(eventType, start, end)
+
+	var r0 types.Event
+	if rf, ok := ret.Get(0).(func(string, time.Time, time.Time) types.Event); ok {
+		r0 = rf(eventType, start, end)
+	} else {
+		r0 = ret.Get(0).(types.Event)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, time.Time, time.Time) error); ok {
+		r1 = rf(eventType, start, end)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetEventByID provides a mock function with given fields: eventID
 func (_m *EventRepository) GetEventByID(eventID int) (types.Event, error) {
 	ret := _m.Called(eventID)
@@ -122,6 +143,29 @@ func (_m *EventRepository) GetEventByID(eventID int) (types.Event, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(eventID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetEventsBetweenDates provides a mock function with given fields: start, end
+func (_m *EventRepository) GetEventsBetweenDates(start time.Time, end time.Time) ([]types.Event, error) {
+	ret := _m.Called(start, end)
+
+	var r0 []types.Event
+	if rf, ok := ret.Get(0).(func(time.Time, time.Time) []types.Event); ok {
+		r0 = rf(start, end)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.Event)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(time.Time, time.Time) error); ok {
+		r1 = rf(start, end)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -168,6 +212,29 @@ func (_m *EventRepository) GetEventsByType(eventType string) ([]types.Event, err
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(eventType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetEventsByTypeBetween provides a mock function with given fields: eventType, start, end
+func (_m *EventRepository) GetEventsByTypeBetween(eventType string, start time.Time, end time.Time) ([]types.Event, error) {
+	ret := _m.Called(eventType, start, end)
+
+	var r0 []types.Event
+	if rf, ok := ret.Get(0).(func(string, time.Time, time.Time) []types.Event); ok {
+		r0 = rf(eventType, start, end)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.Event)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, time.Time, time.Time) error); ok {
+		r1 = rf(eventType, start, end)
 	} else {
 		r1 = ret.Error(1)
 	}

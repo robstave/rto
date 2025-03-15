@@ -57,3 +57,28 @@ func (r *EventRepositorySQLite) GetEventByDateAndType(date time.Time, eventType 
 	result := r.db.Where("date = ? AND type = ?", date, eventType).First(&event)
 	return event, result.Error
 }
+
+func (r *EventRepositorySQLite) GetEventsByTypeBetween(eventType string, start, end time.Time) ([]types.Event, error) {
+	var events []types.Event
+	result := r.db.Where("type = ? AND date BETWEEN ? AND ?", eventType, start, end).
+		Order("date ASC").
+		Find(&events)
+	return events, result.Error
+}
+
+// GetEventsBetweenDates returns all events that occur between the start and stop times.
+func (r *EventRepositorySQLite) GetEventsBetweenDates(start, end time.Time) ([]types.Event, error) {
+	var events []types.Event
+	result := r.db.Where("date BETWEEN ? AND ?", start, end).
+		Order("date ASC").
+		Find(&events)
+	return events, result.Error
+}
+
+// GetEventByDateAndTypeBetween returns the first event of the given type that occurs between the start and stop times.
+func (r *EventRepositorySQLite) GetEventByDateAndTypeBetween(eventType string, start, end time.Time) (types.Event, error) {
+	var event types.Event
+	result := r.db.Where("type = ? AND date BETWEEN ? AND ?", eventType, start, end).
+		First(&event)
+	return event, result.Error
+}

@@ -41,7 +41,7 @@ func TestAddEvent_Success(t *testing.T) {
 	mockService.On("GetEventByDateAndType", event.Date, "vacation").Return(&event, nil)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	reqBody := "date=2024-11-20&type=vacation&description=Team+Building&isInOffice=false"
@@ -71,7 +71,7 @@ func TestAddEvent_MissingFields(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	reqBody := "date=2024-11-20&description=Team+Building&isInOffice=false"
@@ -99,7 +99,7 @@ func TestAddEvent_InvalidDateFormat(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with invalid date format
@@ -141,7 +141,7 @@ func TestAddEvent_ServiceError(t *testing.T) {
 	mockService.On("AddEvent", event).Return(errors.New("database error"))
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with the event data
@@ -218,7 +218,7 @@ func TestBulkAddEventsJSON_Success(t *testing.T) {
 	mockService.On("BulkAddEvents", events).Return(&bulkAddResponse, nil)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with bulk events
@@ -267,7 +267,7 @@ func TestBulkAddEventsJSON_InvalidJSON(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with invalid JSON
@@ -297,7 +297,7 @@ func TestBulkAddEventsJSON_InvalidEventType(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with an invalid event type
@@ -336,7 +336,7 @@ func TestBulkAddEventsJSON_InvalidDateFormat(t *testing.T) {
 	mockService := new(mocks.RTOBLL)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with an invalid date format
@@ -378,7 +378,7 @@ func TestBulkAddEventsJSON_ServiceError(t *testing.T) {
 	mockService.On("BulkAddEvents", mock.Anything).Return(nil, errors.New("service error"))
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request with bulk events

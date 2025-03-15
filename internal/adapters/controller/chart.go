@@ -29,8 +29,10 @@ func (ctlr *RTOController) GetChartData(c echo.Context) error {
 	}
 
 	// Build the date range (October 1, 2024 to December 31, 2024)
-	startDate := time.Date(2024, 10, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
+	//startDate := time.Date(2024, 12, 31, 0, 0, 0, 0, time.UTC)
+	//endDate := time.Date(2025, 3, 28, 0, 0, 0, 0, time.UTC)
+	startDate := ctlr.quarterStart
+	endDate := ctlr.quarterEnd
 	dateRange := utils.GetDateRange(startDate, endDate) // We'll define this utility function next
 
 	// Prepare data for the chart

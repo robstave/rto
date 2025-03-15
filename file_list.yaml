@@ -1,8 +1,9 @@
 # concats all the files into a few large ones
 #  use ./helper concat
  
-con-adapters:
+controllers:
   - docs/instructions.md
+  - internal/adapters/controller/auth.go
   - internal/adapters/controller/chart.go
   - internal/adapters/controller/controller.go
   - internal/adapters/controller/delete.go
@@ -12,13 +13,16 @@ con-adapters:
   - internal/adapters/controller/home.go
   - internal/adapters/controller/prefs.go
   - internal/adapters/controller/toggle.go
+
+repositories:
+  - docs/instructions.md
   - internal/adapters/repositories/event_repository.go
   - internal/adapters/repositories/events.go
   - internal/adapters/repositories/prefs.go
   - internal/adapters/repositories/service.go
   - internal/adapters/repositories/preference_repository.go
 
-con-domain:
+domain:
   - docs/instructions.md
   - cmd/main/main.go
   - internal/echo-routes.go

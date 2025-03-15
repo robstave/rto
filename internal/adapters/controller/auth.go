@@ -14,8 +14,8 @@ func (ctlr *RTOController) ShowLoginForm(c echo.Context) error {
 
 // ProcessLogin handles the login form submission
 func (ctlr *RTOController) ProcessLogin(c echo.Context) error {
-	username := c.FormValue("username aaa")
-	password := c.FormValue("password aaa")
+	username := c.FormValue("username")
+	password := c.FormValue("password")
 
 	// Hardcoded credentials
 	const (

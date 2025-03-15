@@ -45,7 +45,7 @@ func TestToggleAttendance_Success(t *testing.T) {
 	}, nil)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request
@@ -88,7 +88,7 @@ func TestToggleAttendance_InvalidDateFormat(t *testing.T) {
 	reqBodyJSON, _ := json.Marshal(reqBody)
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request
@@ -127,7 +127,7 @@ func TestToggleAttendance_ServiceError(t *testing.T) {
 	mockService.On("ToggleAttendance", eventDate).Return("", errors.New("attendance event not found"))
 
 	// Initialize the controller with the mock service
-	ctlr := NewRTOControllerWithMock("none", mockService)
+	ctlr := NewRTOControllerWithMock("none", mockService, QuarterStart, QuarterEnd)
 	ctlr.logger = slog.New(slog.NewTextHandler(os.Stdout, nil)) // Assign a simple logger
 
 	// Create a POST request
